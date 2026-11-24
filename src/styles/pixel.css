@@ -208,3 +208,60 @@ html, body {
   background: var(--wood);
   border: 2px solid var(--bg);
 }
+
+/* Signboard Entrance & Motion Animations */
+@keyframes sign-drop {
+  0% { transform: translateY(-120vh); }
+  65% { transform: translateY(0); }
+  78% { transform: translateY(-18px); }
+  86% { transform: translateY(0); }
+  94% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes sign-swing {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(-3deg); }
+  35% { transform: rotate(3deg); }
+  55% { transform: rotate(-2deg); }
+  75% { transform: rotate(1deg); }
+  90% { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes letter-rise {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0%); }
+}
+
+@keyframes blink-cursor {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes btn-pop-squash {
+  0% { transform: scale(0); opacity: 0; }
+  1% { transform: scaleX(1.35) scaleY(0.65); opacity: 1; }
+  50% { transform: scaleX(0.85) scaleY(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes btn-pulse {
+  0%, 80%, 100% { transform: scale(1); }
+  85% { transform: scale(1.05); }
+  90% { transform: scale(0.97); }
+  95% { transform: scale(1.02); }
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .sign-assembly,
+  .letter-char,
+  .pixel-btn-pulse,
+  .pixel-btn-pop {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+

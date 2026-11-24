@@ -12,6 +12,8 @@ export interface PixelCanvasProps {
   onRender?: (ctx: CanvasRenderingContext2D, timeMs: number) => void;
   onPointerMoveNative?: (coords: NativePointerCoords | null) => void;
   onPointerClickNative?: (coords: NativePointerCoords) => void;
+  onScaleChange?: (scale: number) => void;
+  children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -20,6 +22,8 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   onRender,
   onPointerMoveNative,
   onPointerClickNative,
+  onScaleChange,
+  children,
   className = '',
   style = {},
 }) => {
@@ -28,10 +32,15 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   const [scale, setScale] = useState<number>(1);
   const animFrameIdRef = useRef<number>(0);
   const renderRef = useRef(onRender);
+  const onScaleChangeRef = useRef(onScaleChange);
 
   useEffect(() => {
     renderRef.current = onRender;
   }, [onRender]);
+
+  useEffect(() => {
+    onScaleChangeRef.current = onScaleChange;
+  }, [onScaleChange]);
 
   // Handle responsive integer scaling and letterboxing
   const updateScale = useCallback(() => {
@@ -43,7 +52,13 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
     const scaleY = Math.floor(clientHeight / NATIVE_HEIGHT);
     const newScale = Math.max(1, Math.min(scaleX, scaleY));
 
-    setScale((prev) => (prev !== newScale ? newScale : prev));
+    setScale((prev) => {
+      if (prev !== newScale) {
+        onScaleChangeRef.current?.(newScale);
+        return newScale;
+      }
+      return prev;
+    });
   }, []);
 
   useEffect(() => {
@@ -158,6 +173,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
           cursor: onPointerClickNative ? 'pointer' : 'default',
         }}
       />
+      {children}
     </div>
   );
 };
