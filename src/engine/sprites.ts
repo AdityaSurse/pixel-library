@@ -78,6 +78,14 @@ export function drawBubbleCoffee(ctx: CanvasRenderingContext2D, x: number, y: nu
 }
 
 /**
+ * Draws the heart status bubble (avatar selection celebratory reaction).
+ */
+export function drawBubbleHeart(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  const bubble = getImage('bubble_heart');
+  ctx.drawImage(bubble, Math.round(x), Math.round(y));
+}
+
+/**
  * Draws the plus icon for empty chair hovering.
  */
 export function drawPlus(ctx: CanvasRenderingContext2D, x: number, y: number): void {
@@ -90,7 +98,7 @@ export function drawPlus(ctx: CanvasRenderingContext2D, x: number, y: number): v
  */
 export function drawIcon(
   ctx: CanvasRenderingContext2D,
-  name: 'book' | 'clock' | 'coffee' | 'door' | 'fire' | 'link' | 'tomato' | 'user',
+  name: 'book' | 'clock' | 'coffee' | 'door' | 'fire' | 'link' | 'tomato' | 'user' | 'check',
   x: number,
   y: number
 ): void {

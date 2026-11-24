@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { loadAssets } from './engine/assets';
 import { LoadingScreen } from './components/LoadingScreen';
 import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
 import { JoinPage } from './pages/JoinPage';
 import { SetupPage } from './pages/SetupPage';
@@ -56,9 +57,30 @@ export const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/join" element={<JoinPage />} />
-          <Route path="/setup" element={<SetupPage />} />
-          <Route path="/lobby" element={<LobbyPage />} />
-          <Route path="/room/:code" element={<RoomPage />} />
+          <Route
+            path="/setup"
+            element={
+              <ProtectedRoute>
+                <SetupPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lobby"
+            element={
+              <ProtectedRoute requireProfile>
+                <LobbyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/room/:code"
+            element={
+              <ProtectedRoute requireProfile>
+                <RoomPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

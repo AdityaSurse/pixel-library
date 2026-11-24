@@ -2,9 +2,13 @@ import React from 'react';
 
 export interface LoadingScreenProps {
   progress: number; // 0 to 1
+  status?: string;
 }
 
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({
+  progress,
+  status = 'Opening the library…',
+}) => {
   const percentage = Math.min(100, Math.max(0, Math.round(progress * 100)));
 
   return (
@@ -40,7 +44,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress }) => {
             letterSpacing: '1px',
           }}
         >
-          Opening the library…
+          {status}
         </div>
 
         {/* Pixel Progress Bar */}

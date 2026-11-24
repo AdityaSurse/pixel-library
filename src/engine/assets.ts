@@ -59,12 +59,14 @@ export type ImageKey =
   | 'light'
   | 'sheet'
   | 'heads'
+  | 'avatar_heads'
   | 'chair'
   | 'table'
   | 'lamp'
   | 'panel'
   | 'bubble_fire'
   | 'bubble_coffee'
+  | 'bubble_heart'
   | 'plus'
   | 'book'
   | 'clock'
@@ -74,6 +76,8 @@ export type ImageKey =
   | 'link'
   | 'tomato'
   | 'user'
+  | 'check'
+  | 'quietpage_atlas'
   | 'progress_empty'
   | 'progress_full';
 
@@ -82,12 +86,14 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   light: '/pixel-library-assets/backgrounds/lighting_overlay.png',
   sheet: '/pixel-library-assets/sprites/avatars/avatars_sheet.png',
   heads: '/pixel-library-assets/sprites/avatars/avatar_heads@4x.png',
+  avatar_heads: '/pixel-library-assets/sprites/avatars/avatar_heads.png',
   chair: '/pixel-library-assets/sprites/furniture/chair_near.png',
   table: '/pixel-library-assets/sprites/furniture/table@4x.png',
   lamp: '/pixel-library-assets/sprites/furniture/desk_lamp@4x.png',
   panel: '/pixel-library-assets/ui/panel_9slice.png',
   bubble_fire: '/pixel-library-assets/ui/bubble_fire.png',
   bubble_coffee: '/pixel-library-assets/ui/bubble_coffee.png',
+  bubble_heart: '/pixel-library-assets/ui/bubble_heart.png',
   plus: '/pixel-library-assets/icons/plus.png',
   book: '/pixel-library-assets/icons/book.png',
   clock: '/pixel-library-assets/icons/clock.png',
@@ -97,6 +103,8 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   link: '/pixel-library-assets/icons/link.png',
   tomato: '/pixel-library-assets/icons/tomato.png',
   user: '/pixel-library-assets/icons/user.png',
+  check: '/pixel-library-assets/icons/check.png',
+  quietpage_atlas: '/pixel-library-assets/fonts/quietpage_atlas.png',
   progress_empty: '/pixel-library-assets/ui/progress_empty.png',
   progress_full: '/pixel-library-assets/ui/progress_full.png',
 };
