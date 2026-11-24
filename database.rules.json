@@ -1,0 +1,29 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$code": {
+        "presence": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && auth.uid == $uid",
+            ".validate": "newData.hasChildren(['username', 'preset', 'status']) && newData.child('status').val().matches(/^(browsing|studying|break|away)$/) && newData.child('preset').val().matches(/^(aditya|meera|kabir|zoya|rohan|tara|ishaan|anya)$/) && newData.child('username').val().matches(/^[a-z0-9_]{1,16}$/)"
+          }
+        },
+        "seats": {
+          ".read": "auth != null",
+          "$seatId": {
+            ".write": "auth != null && ((!data.exists() && newData.val() == auth.uid) || (data.val() == auth.uid && !newData.exists()))",
+            ".validate": "newData.val() == auth.uid"
+          }
+        },
+        "timer": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['mode', 'durationMs', 'round']) && (newData.child('mode').val() == 'focus' || newData.child('mode').val() == 'break') && (newData.child('durationMs').val() >= 1 && newData.child('durationMs').val() <= 3600000) && (newData.child('round').isNumber() && newData.child('round').val() >= 1)"
+        }
+      }
+    }
+  }
+}

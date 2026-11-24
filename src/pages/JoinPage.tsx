@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import {
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  User,
-} from 'firebase/auth';
+import { signInWithPopup, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +11,10 @@ export const JoinPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    document.title = 'Sign In · Pixel Library';
+  }, []);
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -63,73 +62,35 @@ export const JoinPage: React.FC = () => {
     }
   }, [authLoading, user, profile, navigate, intendedUrl]);
 
-  // Handle redirect result (for mobile Safari or popup fallback)
-  useEffect(() => {
-    let active = true;
-    getRedirectResult(auth)
-      .then((res) => {
-        if (active && res && res.user) {
-          handleUserSignedIn(res.user);
-        }
-      })
-      .catch((err: unknown) => {
-        if (active && err instanceof Error) {
-          console.error('Redirect sign-in error:', err);
-          setErrorMessage(
-            'The card desk could not verify your credentials after redirect. Please try again.'
-          );
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [handleUserSignedIn]);
-
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
     setIsSigningIn(true);
 
-    const isMobileSafari =
-      typeof navigator !== 'undefined' &&
-      /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-      /WebKit/.test(navigator.userAgent) &&
-      !/CriOS|FxiOS|OPiOS|mercury/i.test(navigator.userAgent);
-
     try {
-      if (isMobileSafari) {
-        // Direct redirect on mobile Safari to avoid popup blocking
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        try {
-          const cred = await signInWithPopup(auth, googleProvider);
-          if (cred && cred.user) {
-            await handleUserSignedIn(cred.user);
-          }
-        } catch (popupErr: unknown) {
-          const errCode = (popupErr as { code?: string })?.code;
-          if (
-            errCode === 'auth/popup-blocked' ||
-            errCode === 'auth/cancelled-popup-request'
-          ) {
-            // Fall back to redirect
-            await signInWithRedirect(auth, googleProvider);
-          } else if (errCode === 'auth/popup-closed-by-user') {
-            setIsSigningIn(false);
-          } else {
-            throw popupErr;
-          }
-        }
+      const cred = await signInWithPopup(auth, googleProvider);
+      if (cred && cred.user) {
+        await handleUserSignedIn(cred.user);
       }
     } catch (err: unknown) {
       setIsSigningIn(false);
       console.error('Sign-in error:', err);
-      const code = (err as { code?: string })?.code;
-      if (code === 'auth/network-request-failed') {
+      const errCode = (err as { code?: string })?.code;
+
+      if (
+        errCode === 'auth/popup-blocked' ||
+        errCode === 'auth/cancelled-popup-request'
+      ) {
+        setErrorMessage(
+          'Popup was blocked by your browser. Please allow popups for this site and try again.'
+        );
+      } else if (errCode === 'auth/popup-closed-by-user') {
+        // User voluntarily dismissed popup
+        setErrorMessage(null);
+      } else if (errCode === 'auth/network-request-failed') {
         setErrorMessage(
           'Network connection interrupted. Please check your internet connection and try again.'
         );
-      } else if (code !== 'auth/popup-closed-by-user') {
+      } else {
         setErrorMessage(
           'Unable to sign in right now. Please try again or check your browser popup settings.'
         );

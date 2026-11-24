@@ -273,6 +273,19 @@ html, body {
 
 /* Who's Here Responsive Drawer */
 @media (min-width: 769px) {
+  .room-clock-panel {
+    position: absolute !important;
+    top: 16px !important;
+    right: 16px !important;
+    width: 220px !important;
+    z-index: 36 !important;
+  }
+  .whos-here-panel {
+    top: 225px !important;
+    right: 16px !important;
+    width: 220px !important;
+    max-height: calc(100vh - 245px) !important;
+  }
   .whos-here-mobile-toggle {
     display: none !important;
   }
@@ -282,6 +295,13 @@ html, body {
 }
 
 @media (max-width: 768px) {
+  .room-clock-panel {
+    position: relative !important;
+    width: calc(100% - 32px) !important;
+    max-width: 340px !important;
+    margin: 8px auto !important;
+    z-index: 30 !important;
+  }
   .whos-here-panel {
     display: none !important;
     top: auto !important;

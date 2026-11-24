@@ -5,6 +5,8 @@ import {
   drawBubbleCoffee,
   drawBubbleFire,
   drawBubbleZzz,
+  drawBubbleBook,
+  drawBubbleTomato,
   drawPlus,
 } from '../../engine/sprites';
 import { drawAtlasNameTag } from '../../engine/atlasText';
@@ -21,6 +23,10 @@ export interface RoomRenderParams {
   showAllNames: boolean;
   doorFlashUntilMs: number;
   squashMap: Map<string, number>;
+  timerMode?: 'focus' | 'break';
+  isTimerRunning?: boolean;
+  focusStartMs?: number;
+  streakFireUntilMs?: number;
 }
 
 export function renderRoomScene(
@@ -38,6 +44,10 @@ export function renderRoomScene(
     showAllNames,
     doorFlashUntilMs,
     squashMap,
+    timerMode = 'focus',
+    isTimerRunning = false,
+    focusStartMs = 0,
+    streakFireUntilMs = 0,
   } = params;
 
   ctx.imageSmoothingEnabled = false;
@@ -76,7 +86,8 @@ export function renderRoomScene(
     } else {
       const offset = getUserPhaseOffset(uid);
       const step = Math.floor((timeMs + offset) / 500) % 2;
-      if (reader.status === 'break') {
+      const isBreak = timerMode === 'break' || reader.status === 'break';
+      if (isBreak) {
         frame = 2 + step; // front_break_a (2) or front_break_b (3)
       } else {
         frame = 0 + step; // front_study_a (0) or front_study_b (1)
@@ -109,7 +120,8 @@ export function renderRoomScene(
     } else {
       const offset = getUserPhaseOffset(uid);
       const step = Math.floor((timeMs + offset) / 500) % 2;
-      if (reader.status === 'break') {
+      const isBreak = timerMode === 'break' || reader.status === 'break';
+      if (isBreak) {
         frame = 6 + step; // back_break_a (6) or back_break_b (7)
       } else {
         frame = 4 + step; // back_study_a (4) or back_study_b (5)
@@ -148,18 +160,24 @@ export function renderRoomScene(
     // Status bubble placement
     const bubbleX = seat.avatar.x + 8;
     const bubbleY = seat.avatar.y - 15;
+    const isSelf = uid === currentUid;
 
     if (reader.status === 'away') {
       drawBubbleZzz(ctx, bubbleX, bubbleY);
-    } else if (reader.status === 'break') {
-      drawBubbleCoffee(ctx, bubbleX, bubbleY);
-    } else if (reader.status === 'studying') {
+    } else if (isSelf && streakFireUntilMs && timeMs < streakFireUntilMs) {
       drawBubbleFire(ctx, bubbleX, bubbleY);
+    } else if (timerMode === 'break') {
+      drawBubbleCoffee(ctx, bubbleX, bubbleY);
+    } else if (timerMode === 'focus' && isTimerRunning) {
+      if (isSelf) {
+        drawBubbleTomato(ctx, bubbleX, bubbleY);
+      } else if (focusStartMs && timeMs - focusStartMs < 3000) {
+        drawBubbleBook(ctx, bubbleX, bubbleY);
+      }
     }
 
     // Name tag: show if hovered, if current user, or if showAllNames is true
     const isHovered = seat.id === hoveredSeatId;
-    const isSelf = uid === currentUid;
 
     if (isHovered || isSelf || showAllNames) {
       const textColor = isSelf ? '#ffe2a0' : '#f1e3c4';

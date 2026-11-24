@@ -16,6 +16,7 @@
 
 <p align="center">
   <a href="#how-it-works">How it works</a> · 
+  <a href="#how-to-study-with-friends">Study with friends</a> · 
   <a href="#architecture">Architecture</a> · 
   <a href="#data-model">Data model</a> · 
   <a href="#taking-a-seat">Taking a seat</a> · 
@@ -83,10 +84,10 @@ flowchart TB
         Auth["Authentication (Google OAuth)"]:::purple
         Firestore["Cloud Firestore (Users, Usernames, Rooms)"]:::mustard
         RTDB["Realtime Database (Presence, Seats, Timer)"]:::red
-        Hosting["Firebase Hosting (Static CDN Edge)"]:::green
     end
 
-    Hosting -. "serves bundle" .-> Browser
+    Deploy["Vercel (Global Edge Network)"]:::green
+    Deploy -. "serves SPA bundle" .-> Browser
     UI --> Engine
     Assets --> Engine
     UI --> |"Google Sign-In popup"| Auth
@@ -223,6 +224,18 @@ stateDiagram-v2
 
 ---
 
+## How to study with friends
+
+Gather your study group, share a quiet table, and focus together in five simple steps:
+
+1. **Sign in with Google**: Authenticate in one click to receive your official Library Card. Pick your favorite pixel avatar from 8 handcrafted scholar presets (`aditya`, `meera`, `kabir`, `zoya`, `rohan`, `tara`, `ishaan`, `anya`) and claim your unique username.
+2. **Step up to the Front Desk (`/lobby`)**: Name your room (e.g., *"Late Night Calculus"*) and choose your focus/break cycle (25m/5m or 50m/10m). Click **CREATE ROOM** to generate a collision-free 6-character room code.
+3. **Share your Table Link**: Click **COPY LINK** on the room sign or share sheet to copy the invite URL (`https://your-domain.vercel.app/room/CODE`). Friends opening the link go directly to your study room.
+4. **Pull up a Chair**: Click any of the 24 seats across the 6 library tables. Empty chairs display a bobbing plus sign on hover. Clicking claims the seat atomically with a 2-frame squash animation.
+5. **Run the Synchronized Clock**: Any scholar can press **START** on the room-wide Pomodoro clock. When focus completes, a 3-note synthesized Web Audio chime plays, avatars switch to coffee break mode, and focus hours and day streaks increment automatically on your profile!
+
+---
+
 ## Build phases
 
 The seven development phases outline our progression from foundation blueprints to deployment.
@@ -238,12 +251,12 @@ flowchart LR
     classDef pink fill:#c86b86,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
     classDef wood fill:#7a4d31,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
 
-    P1["Phase 1: README ✅"]:::green --> P2["Phase 2: Setup & engine"]:::mustard
-    P2 --> P3["Phase 3: Landing sign"]:::wood
-    P3 --> P4["Phase 4: Google sign-in & avatar"]:::blue
-    P4 --> P5["Phase 5: Lobby"]:::teal
-    P5 --> P6["Phase 6: Reading room"]:::purple
-    P6 --> P7["Phase 7: Pomodoro & launch"]:::red
+    P1["Phase 1: README ✅"]:::green --> P2["Phase 2: Setup & engine ✅"]:::green
+    P2 --> P3["Phase 3: Landing sign ✅"]:::green
+    P3 --> P4["Phase 4: Google sign-in & avatar ✅"]:::green
+    P4 --> P5["Phase 5: Lobby ✅"]:::green
+    P5 --> P6["Phase 6: Reading room ✅"]:::green
+    P6 --> P7["Phase 7: Pomodoro & launch ✅"]:::green
 ```
 
 ---
@@ -261,7 +274,7 @@ Every building block is purpose-selected for cozy pixel-art fidelity and low-lat
 | <img src="public/pixel-library-assets/icons/user@4x.png" width="20" style="image-rendering: pixelated; vertical-align: middle;"> | **Firebase Authentication** | Single-click Google Sign-In popup with persistent scholar sessions |
 | <img src="public/pixel-library-assets/icons/door@4x.png" width="20" style="image-rendering: pixelated; vertical-align: middle;"> | **Cloud Firestore** | Document persistence for scholar profiles, usernames, and room configurations |
 | <img src="public/pixel-library-assets/icons/link@4x.png" width="20" style="image-rendering: pixelated; vertical-align: middle;"> | **Firebase Realtime Database** | Low-latency atomic seat transactions, live presence, and synced room timers |
-| <img src="public/pixel-library-assets/icons/fire@4x.png" width="20" style="image-rendering: pixelated; vertical-align: middle;"> | **Firebase Hosting** | High-speed global edge distribution for the single-page client build |
+| <img src="public/pixel-library-assets/icons/door@4x.png" width="20" style="image-rendering: pixelated; vertical-align: middle;"> | **Vercel** | High-speed global edge distribution with SPA rewrites for deep-linked rooms |
 | <img src="public/pixel-library-assets/icons/tomato@4x.png" width="20" style="image-rendering: pixelated; vertical-align: middle;"> | **Shared Pomodoro Engine** | Synchronized 25m focus / 5m break room-wide cycles and avatar state flipping |
 | <img src="public/pixel-library-assets/icons/coffee@4x.png" width="20" style="image-rendering: pixelated; vertical-align: middle;"> | **Quietpage Typography** | Dedicated bitmap pixel typeface locked to 10px, 20px, 30px, 40px, and 60px |
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   doc,
@@ -28,6 +28,10 @@ function generateRandomCode(): string {
 export const LobbyPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
+
+  useEffect(() => {
+    document.title = 'Front Desk · Pixel Library';
+  }, []);
 
   // Create Room state
   const defaultRoomName = useMemo(() => {

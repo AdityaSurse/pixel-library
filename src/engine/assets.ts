@@ -68,6 +68,8 @@ export type ImageKey =
   | 'bubble_coffee'
   | 'bubble_heart'
   | 'bubble_zzz'
+  | 'bubble_book'
+  | 'bubble_tomato'
   | 'plus'
   | 'book'
   | 'clock'
@@ -78,6 +80,7 @@ export type ImageKey =
   | 'tomato'
   | 'user'
   | 'check'
+  | 'music'
   | 'quietpage_atlas'
   | 'progress_empty'
   | 'progress_full';
@@ -96,6 +99,8 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   bubble_coffee: '/pixel-library-assets/ui/bubble_coffee.png',
   bubble_heart: '/pixel-library-assets/ui/bubble_heart.png',
   bubble_zzz: '/pixel-library-assets/ui/bubble_zzz.png',
+  bubble_book: '/pixel-library-assets/ui/bubble_book.png',
+  bubble_tomato: '/pixel-library-assets/ui/bubble_tomato.png',
   plus: '/pixel-library-assets/icons/plus.png',
   book: '/pixel-library-assets/icons/book.png',
   clock: '/pixel-library-assets/icons/clock.png',
@@ -106,6 +111,7 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   tomato: '/pixel-library-assets/icons/tomato.png',
   user: '/pixel-library-assets/icons/user.png',
   check: '/pixel-library-assets/icons/check.png',
+  music: '/pixel-library-assets/icons/music.png',
   quietpage_atlas: '/pixel-library-assets/fonts/quietpage_atlas.png',
   progress_empty: '/pixel-library-assets/ui/progress_empty.png',
   progress_full: '/pixel-library-assets/ui/progress_full.png',

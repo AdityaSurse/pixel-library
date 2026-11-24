@@ -11,10 +11,24 @@ import {
   RoomSeatsMap,
   RoomPresenceManager,
 } from '../services/roomPresence';
+import {
+  subscribeToRoomTimer,
+  computeRemainingMs,
+  startTimer,
+  pauseTimer,
+  resumeTimer,
+  resetTimer,
+  skipTimer,
+  advanceTimerPhase,
+  RoomTimerData,
+} from '../services/roomTimer';
+import { playPhaseEndChime } from '../services/audioChime';
+import { recordPomodoroCompletion } from '../services/userStats';
 import { getSeatAtCoords } from '../components/room/roomGeometry';
 import { renderRoomScene } from '../components/room/RoomSceneRenderer';
 import { RoomHUD } from '../components/room/RoomHUD';
 import { WhosHereDrawer } from '../components/room/WhosHereDrawer';
+import { RoomClockPanel } from '../components/room/RoomClockPanel';
 import { RoomToasts, ToastMessage } from '../components/room/RoomToasts';
 
 interface RoomData {
@@ -39,6 +53,8 @@ export const RoomPage: React.FC = () => {
   // RTDB state
   const [presence, setPresence] = useState<RoomPresenceMap>({});
   const [seats, setSeats] = useState<RoomSeatsMap>({});
+  const [timer, setTimer] = useState<RoomTimerData | null>(null);
+  const [remainingMs, setRemainingMs] = useState(0);
 
   // UI state
   const [showAllNames, setShowAllNames] = useState(false);
@@ -46,6 +62,8 @@ export const RoomPage: React.FC = () => {
   const [highlightedSeatId, setHighlightedSeatId] = useState<string | null>(null);
   const [highlightUntilMs, setHighlightUntilMs] = useState(0);
   const [doorFlashUntilMs, setDoorFlashUntilMs] = useState(0);
+  const [focusStartMs, setFocusStartMs] = useState(0);
+  const [streakFireUntilMs, setStreakFireUntilMs] = useState(0);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -53,6 +71,8 @@ export const RoomPage: React.FC = () => {
   const squashMapRef = useRef<Map<string, number>>(new Map());
   const presenceManagerRef = useRef<RoomPresenceManager | null>(null);
   const prevPresenceRef = useRef<RoomPresenceMap | null>(null);
+  const prevTimerRef = useRef<RoomTimerData | null>(null);
+  const isAdvancingRef = useRef(false);
 
   // Add toast helper
   const addToast = useCallback((text: string, icon?: 'door' | 'info') => {
@@ -109,20 +129,17 @@ export const RoomPage: React.FC = () => {
     };
   }, [cleanCode, user]);
 
-  // 2. Realtime Database Presence & Data Subscription
+  // 2. Realtime Database Presence & Seats Subscription
   useEffect(() => {
     if (!cleanCode || !user || !profile || roomNotFound) return;
 
-    // Handle seat conflicts from RTDB transaction
     const handleSeatConflict = () => {
       addToast('Someone just sat there!', 'info');
     };
 
-    // Initialize Presence
     const manager = initRoomPresence(cleanCode, user.uid, profile, handleSeatConflict);
     presenceManagerRef.current = manager;
 
-    // Subscribe to presence and seat updates
     const unsubRoomData = subscribeToRoomData(
       cleanCode,
       (newPresence) => {
@@ -140,7 +157,103 @@ export const RoomPage: React.FC = () => {
     };
   }, [cleanCode, user, profile, roomNotFound, addToast]);
 
-  // 3. Detect arrivals & departures for door window flash and toasts
+  // 3. Shared Pomodoro Timer Subscription
+  useEffect(() => {
+    if (!cleanCode || roomNotFound) return;
+
+    const unsubTimer = subscribeToRoomTimer(cleanCode, (newTimer) => {
+      const prev = prevTimerRef.current;
+
+      if (newTimer) {
+        // Detect action toasts from other users
+        if (prev && prev.startedAt === null && newTimer.startedAt !== null) {
+          if (newTimer.updatedBy !== profile?.username) {
+            addToast(`${newTimer.updatedBy} started the timer`, 'info');
+          }
+          if (newTimer.mode === 'focus') {
+            setFocusStartMs(performance.now());
+          }
+        } else if (prev && prev.startedAt !== null && newTimer.startedAt === null) {
+          if (newTimer.updatedBy !== profile?.username) {
+            addToast(`${newTimer.updatedBy} paused the timer`, 'info');
+          }
+        } else if (prev && (prev.mode !== newTimer.mode || prev.round !== newTimer.round)) {
+          if (newTimer.mode === 'focus') {
+            setFocusStartMs(performance.now());
+          }
+        }
+      }
+
+      prevTimerRef.current = newTimer;
+      setTimer(newTimer);
+    });
+
+    return () => {
+      unsubTimer();
+    };
+  }, [cleanCode, roomNotFound, profile, addToast]);
+
+  // 4. Timer Countdown Loop & Auto-Advancement
+  useEffect(() => {
+    if (!room) return;
+
+    const interval = setInterval(async () => {
+      const rem = computeRemainingMs(timer);
+      setRemainingMs(rem);
+
+      // Dynamic Tab Title
+      if (timer && timer.startedAt !== null) {
+        const secs = Math.max(0, Math.ceil(rem / 1000));
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        const icon = timer.mode === 'focus' ? '🍅' : '☕';
+        const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        document.title = `${icon} ${formatted} · Pixel Library`;
+      } else {
+        document.title = `${room.name || 'Study Room'} · Pixel Library`;
+      }
+
+      // Check for Phase End (Auto-Advance)
+      if (timer && timer.startedAt !== null && rem <= 0 && !isAdvancingRef.current) {
+        isAdvancingRef.current = true;
+
+        // Play 3-note synthesized chime
+        playPhaseEndChime();
+
+        // Award Pomodoro stats if seated during completed focus
+        if (timer.mode === 'focus' && user && presence[user.uid]?.seatId && presence[user.uid]?.status !== 'away') {
+          const roundId = `${cleanCode}_r${timer.round}_focus`;
+          recordPomodoroCompletion(user.uid, roundId, room.focusMinutes)
+            .then((res) => {
+              if (res.streakIncreased) {
+                setStreakFireUntilMs(performance.now() + 5000);
+                addToast(`Study streak increased to ${res.newStreak} days!`, 'info');
+              }
+            })
+            .catch(() => {});
+        }
+
+        // Concurrency-safe phase advance
+        await advanceTimerPhase(
+          cleanCode,
+          timer.round,
+          timer.mode,
+          room.focusMinutes,
+          room.breakMinutes
+        );
+
+        setTimeout(() => {
+          isAdvancingRef.current = false;
+        }, 1500);
+      }
+    }, 150);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [timer, room, cleanCode, user, presence, addToast]);
+
+  // 5. Detect arrivals & departures
   useEffect(() => {
     if (!prevPresenceRef.current) {
       prevPresenceRef.current = presence;
@@ -150,20 +263,16 @@ export const RoomPage: React.FC = () => {
     const prev = prevPresenceRef.current;
     const current = presence;
 
-    // Detect new arrivals
     for (const uid of Object.keys(current)) {
       if (!prev[uid]) {
-        // Someone joined!
         const newcomer = current[uid];
         setDoorFlashUntilMs(performance.now() + 100);
         addToast(`${newcomer.username || 'A reader'} walked in`, 'door');
       }
     }
 
-    // Detect departures
     for (const uid of Object.keys(prev)) {
       if (!current[uid]) {
-        // Someone left!
         const departed = prev[uid];
         addToast(`${departed.username || 'A reader'} left quietly`, 'door');
       }
@@ -172,24 +281,19 @@ export const RoomPage: React.FC = () => {
     prevPresenceRef.current = current;
   }, [presence, addToast]);
 
-  // 4. Pointer Interaction: Hover over seats
+  // 6. Pointer interaction
   const handlePointerMoveNative = useCallback((coords: NativePointerCoords | null) => {
     const seat = getSeatAtCoords(coords);
     setHoveredSeatId(seat ? seat.id : null);
   }, []);
 
-  // 5. Pointer Interaction: Click to claim / move seat
   const handlePointerClickNative = useCallback(
     async (coords: NativePointerCoords) => {
       const seat = getSeatAtCoords(coords);
       if (!seat || !presenceManagerRef.current) return;
 
-      // Occupied chair: clicking does nothing
-      if (seats[seat.id]) {
-        return;
-      }
+      if (seats[seat.id]) return;
 
-      // Empty chair: claim seat
       const success = await presenceManagerRef.current.claimSeat(seat.id);
       if (success) {
         squashMapRef.current.set(seat.id, performance.now());
@@ -198,7 +302,7 @@ export const RoomPage: React.FC = () => {
     [seats]
   );
 
-  // 6. Action handlers
+  // 7. HUD Actions
   const handleStandUp = useCallback(async () => {
     if (presenceManagerRef.current) {
       await presenceManagerRef.current.standUp();
@@ -221,7 +325,39 @@ export const RoomPage: React.FC = () => {
     }
   }, []);
 
-  // 7. Render Canvas Loop
+  // 8. Timer Controls
+  const handleStartTimer = useCallback(async () => {
+    if (!room || !profile) return;
+    await startTimer(cleanCode, room.focusMinutes, profile.username);
+    addToast(`${profile.username} started the timer`, 'info');
+    setFocusStartMs(performance.now());
+  }, [cleanCode, room, profile, addToast]);
+
+  const handlePauseTimer = useCallback(async () => {
+    if (!timer || !profile) return;
+    await pauseTimer(cleanCode, timer, remainingMs, profile.username);
+    addToast(`${profile.username} paused the timer`, 'info');
+  }, [cleanCode, timer, remainingMs, profile, addToast]);
+
+  const handleResumeTimer = useCallback(async () => {
+    if (!timer || !profile) return;
+    await resumeTimer(cleanCode, timer, profile.username);
+    addToast(`${profile.username} resumed the timer`, 'info');
+  }, [cleanCode, timer, profile, addToast]);
+
+  const handleResetTimer = useCallback(async () => {
+    if (!room || !profile) return;
+    await resetTimer(cleanCode, room.focusMinutes, profile.username);
+    addToast(`${profile.username} reset the timer`, 'info');
+  }, [cleanCode, room, profile, addToast]);
+
+  const handleSkipTimer = useCallback(async () => {
+    if (!timer || !room || !profile) return;
+    await skipTimer(cleanCode, timer, room.focusMinutes, room.breakMinutes, profile.username);
+    addToast(`${profile.username} skipped to next phase`, 'info');
+  }, [cleanCode, timer, room, profile, addToast]);
+
+  // 9. Canvas Scene Render Loop
   const handleRender = useCallback(
     (ctx: CanvasRenderingContext2D, timeMs: number) => {
       renderRoomScene(ctx, timeMs, {
@@ -234,6 +370,10 @@ export const RoomPage: React.FC = () => {
         showAllNames,
         doorFlashUntilMs,
         squashMap: squashMapRef.current,
+        timerMode: timer?.mode || 'focus',
+        isTimerRunning: Boolean(timer && timer.startedAt !== null),
+        focusStartMs,
+        streakFireUntilMs,
       });
     },
     [
@@ -245,10 +385,12 @@ export const RoomPage: React.FC = () => {
       highlightUntilMs,
       showAllNames,
       doorFlashUntilMs,
+      timer,
+      focusStartMs,
+      streakFireUntilMs,
     ]
   );
 
-  // Closed Room View
   if (roomNotFound) {
     return (
       <div
@@ -285,7 +427,6 @@ export const RoomPage: React.FC = () => {
     );
   }
 
-  // Loading Room View
   if (loadingRoom) {
     return (
       <div
@@ -337,7 +478,19 @@ export const RoomPage: React.FC = () => {
         onLeave={handleLeave}
       />
 
-      {/* Who's Here Panel / Drawer */}
+      {/* Clock Panel */}
+      <RoomClockPanel
+        timer={timer}
+        remainingMs={remainingMs}
+        readersCount={Object.keys(presence).length}
+        onStart={handleStartTimer}
+        onPause={handlePauseTimer}
+        onResume={handleResumeTimer}
+        onReset={handleResetTimer}
+        onSkip={handleSkipTimer}
+      />
+
+      {/* Who's Here Drawer */}
       <WhosHereDrawer
         presence={presence}
         currentUid={user?.uid || null}
@@ -346,7 +499,7 @@ export const RoomPage: React.FC = () => {
         onSelectReader={handleSelectReader}
       />
 
-      {/* Arrival & Departure Toasts */}
+      {/* Arrival, Departure & Timer Toasts */}
       <RoomToasts toasts={toasts} />
     </div>
   );

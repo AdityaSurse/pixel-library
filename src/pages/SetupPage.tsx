@@ -18,6 +18,10 @@ export const SetupPage: React.FC = () => {
   const location = useLocation();
   const { user, profile } = useAuth();
 
+  useEffect(() => {
+    document.title = 'Library Card · Pixel Library';
+  }, []);
+
   const isEditing = Boolean(profile);
 
   // Form state (pre-populate if editing)

@@ -116,6 +116,22 @@ export function drawBubbleZzz(ctx: CanvasRenderingContext2D, x: number, y: numbe
 }
 
 /**
+ * Draws the book status bubble (study focus start).
+ */
+export function drawBubbleBook(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  const bubble = getImage('bubble_book');
+  ctx.drawImage(bubble, Math.round(x), Math.round(y));
+}
+
+/**
+ * Draws the tomato status bubble (active focus for self).
+ */
+export function drawBubbleTomato(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  const bubble = getImage('bubble_tomato');
+  ctx.drawImage(bubble, Math.round(x), Math.round(y));
+}
+
+/**
  * Draws the plus icon for empty chair hovering.
  */
 export function drawPlus(ctx: CanvasRenderingContext2D, x: number, y: number): void {
@@ -128,7 +144,7 @@ export function drawPlus(ctx: CanvasRenderingContext2D, x: number, y: number): v
  */
 export function drawIcon(
   ctx: CanvasRenderingContext2D,
-  name: 'book' | 'clock' | 'coffee' | 'door' | 'fire' | 'link' | 'tomato' | 'user' | 'check',
+  name: 'book' | 'clock' | 'coffee' | 'door' | 'fire' | 'link' | 'tomato' | 'user' | 'check' | 'music',
   x: number,
   y: number
 ): void {

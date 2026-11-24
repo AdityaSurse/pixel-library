@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PixelCanvas } from '../engine/PixelCanvas';
 import { renderLandingScene } from '../components/landing/renderLandingScene';
@@ -12,6 +12,10 @@ export const LandingPage: React.FC = () => {
   const [scale, setScale] = useState<number>(1);
   const [isPressed, setIsPressed] = useState<boolean>(false);
   const [isDithering, setIsDithering] = useState<boolean>(false);
+
+  useEffect(() => {
+    document.title = 'Pixel Library — Cozy Study Room';
+  }, []);
 
   // User status determines target route and button text
   const isLoggedIn = Boolean(profile);
