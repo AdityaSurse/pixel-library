@@ -28,7 +28,9 @@ export function drawAvatar(
   presetIndex: number,
   frame: number | AvatarFrameName,
   x: number,
-  y: number
+  y: number,
+  scaleX: number = 1,
+  scaleY: number = 1
 ): void {
   const sheet = getImage('sheet');
   const frameIdx = getFrameIndex(frame);
@@ -40,17 +42,37 @@ export function drawAvatar(
   const sx = frameIdx * frameWidth;
   const sy = pIdx * frameHeight;
 
-  ctx.drawImage(
-    sheet,
-    sx,
-    sy,
-    frameWidth,
-    frameHeight,
-    Math.round(x),
-    Math.round(y),
-    frameWidth,
-    frameHeight
-  );
+  if (scaleX !== 1 || scaleY !== 1) {
+    ctx.save();
+    const centerX = x + frameWidth / 2;
+    const bottomY = y + frameHeight;
+    ctx.translate(Math.round(centerX), Math.round(bottomY));
+    ctx.scale(scaleX, scaleY);
+    ctx.drawImage(
+      sheet,
+      sx,
+      sy,
+      frameWidth,
+      frameHeight,
+      Math.round(-frameWidth / 2),
+      Math.round(-frameHeight),
+      frameWidth,
+      frameHeight
+    );
+    ctx.restore();
+  } else {
+    ctx.drawImage(
+      sheet,
+      sx,
+      sy,
+      frameWidth,
+      frameHeight,
+      Math.round(x),
+      Math.round(y),
+      frameWidth,
+      frameHeight
+    );
+  }
 }
 
 /**
@@ -82,6 +104,14 @@ export function drawBubbleCoffee(ctx: CanvasRenderingContext2D, x: number, y: nu
  */
 export function drawBubbleHeart(ctx: CanvasRenderingContext2D, x: number, y: number): void {
   const bubble = getImage('bubble_heart');
+  ctx.drawImage(bubble, Math.round(x), Math.round(y));
+}
+
+/**
+ * Draws the zzz status bubble (away reader asleep).
+ */
+export function drawBubbleZzz(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  const bubble = getImage('bubble_zzz');
   ctx.drawImage(bubble, Math.round(x), Math.round(y));
 }
 

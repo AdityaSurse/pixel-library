@@ -67,7 +67,8 @@ export function drawAtlasNameTag(
   ctx: CanvasRenderingContext2D,
   text: string,
   centerX: number,
-  topY: number
+  topY: number,
+  textColor: string = '#ffe2a0'
 ): void {
   const displayText = text.trim() || 'reader';
   const textWidth = measureAtlasText(displayText);
@@ -87,8 +88,8 @@ export function drawAtlasNameTag(
   ctx.lineWidth = 1;
   ctx.strokeRect(boxX + 0.5, boxY + 0.5, boxW - 1, boxH - 1);
 
-  // 2. Draw glyphs tinted in palette light (#ffe2a0)
-  const tintedAtlas = getTintedAtlas('#ffe2a0');
+  // 2. Draw glyphs tinted in target color (palette light #ffe2a0 or parch #f1e3c4)
+  const tintedAtlas = getTintedAtlas(textColor);
   let currentX = boxX + paddingX;
   const textY = boxY + paddingY;
 

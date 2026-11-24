@@ -67,6 +67,7 @@ export type ImageKey =
   | 'bubble_fire'
   | 'bubble_coffee'
   | 'bubble_heart'
+  | 'bubble_zzz'
   | 'plus'
   | 'book'
   | 'clock'
@@ -94,6 +95,7 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   bubble_fire: '/pixel-library-assets/ui/bubble_fire.png',
   bubble_coffee: '/pixel-library-assets/ui/bubble_coffee.png',
   bubble_heart: '/pixel-library-assets/ui/bubble_heart.png',
+  bubble_zzz: '/pixel-library-assets/ui/bubble_zzz.png',
   plus: '/pixel-library-assets/icons/plus.png',
   book: '/pixel-library-assets/icons/book.png',
   clock: '/pixel-library-assets/icons/clock.png',
