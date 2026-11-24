@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Firebase
+.firebase
+firebase-debug.log*
+firestore-debug.log*
+
+# System
+.DS_Store
+Thumbs.db

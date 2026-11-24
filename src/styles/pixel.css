@@ -1,0 +1,210 @@
+/* Quietpage Font & Pixel Theme */
+@font-face {
+  font-family: 'Quietpage';
+  src: url('/pixel-library-assets/fonts/Quietpage.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --palette-0: #1b1423;
+  --palette-1: #2f4a44;
+  --palette-2: #36564e;
+  --palette-3: #253c37;
+  --palette-4: #3a2419;
+  --palette-5: #3a2419;
+  --palette-6: #5c3a26;
+  --palette-7: #7a4d31;
+  --palette-8: #9c6640;
+  --palette-9: #b87d4e;
+  --palette-10: #24160f;
+  --palette-11: #7e5236;
+  --palette-12: #875939;
+  --palette-13: #5e3b27;
+  --palette-14: #986543;
+  --palette-15: #141a33;
+  --palette-16: #1c2750;
+  --palette-17: #283a6a;
+  --palette-18: #f3e6b0;
+  --palette-19: #f6edc8;
+  --palette-20: #d4a24c;
+  --palette-21: #9a6f2e;
+  --palette-22: #f0c873;
+  --palette-23: #2f7a4f;
+  --palette-24: #4fa36a;
+  --palette-25: #1f5236;
+  --palette-26: #ffe2a0;
+  --palette-27: #5a2a33;
+  --palette-28: #a02e2c;
+  --palette-29: #d9463b;
+  --palette-30: #e0705a;
+  --palette-31: #b9a98a;
+  --palette-32: #8a7860;
+  --palette-33: #f1e3c4;
+  --palette-34: #fcf6e6;
+  --palette-35: #473223;
+  --palette-36: #68482f;
+  --palette-37: #553521;
+  --palette-38: #1b1423;
+  --palette-39: #241a2e;
+  --palette-40: #2a1f36;
+  --palette-41: #38243e;
+  --palette-42: #27142b;
+  --palette-43: #4a2850;
+  --palette-44: #603264;
+  --palette-45: #7e4a8a;
+  --palette-46: #9a66a4;
+  --palette-47: #3f7d6e;
+  --palette-48: #519886;
+  --palette-49: #c86b86;
+  --palette-50: #db8ea3;
+  --palette-51: #e0a84a;
+  --palette-52: #4fa36a;
+  --palette-53: #d9463b;
+  --palette-54: #4a5fa8;
+  --palette-55: #6b82c9;
+  --palette-56: #34437a;
+  --palette-57: #c9c9d6;
+  --palette-58: #e0603a;
+  --palette-59: #f2b84b;
+  --palette-60: #fff0b0;
+  --palette-61: #6b3e26;
+  --palette-62: #e8dcc0;
+  --palette-63: #c4b48f;
+
+  /* Semantic Theme Tokens */
+  --bg: #1b1423;
+  --bg2: #241a2e;
+  --wood: #5c3a26;
+  --wood-dark: #3a2419;
+  --ink: #f1e3c4;
+  --dim: #b9a98a;
+  --gold: #ffe2a0;
+  --red: #d9463b;
+  --green: #4fa36a;
+  --mustard: #e0a84a;
+  --blue: #4a5fa8;
+  --purple: #7e4a8a;
+  --teal: #3f7d6e;
+  --pink: #c86b86;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: 'Quietpage', monospace;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  text-rendering: pixelated;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography Scale (Strict 10, 20, 30, 40, 60px) */
+.px-10 { font-size: 10px; line-height: 1.2; }
+.px-20 { font-size: 20px; line-height: 1.2; }
+.px-30 { font-size: 30px; line-height: 1.1; }
+.px-40 { font-size: 40px; line-height: 1.05; }
+.px-60 { font-size: 60px; line-height: 1; }
+
+/* 9-Slice Pixel Panels */
+.pixel-panel {
+  border: 32px solid transparent;
+  border-image: url('/pixel-library-assets/ui/panel_9slice.png') 8 fill / 32px;
+  image-rendering: pixelated;
+  color: var(--bg);
+  box-sizing: border-box;
+}
+
+.pixel-panel-sm {
+  border: 16px solid transparent;
+  border-image: url('/pixel-library-assets/ui/panel_9slice.png') 8 fill / 16px;
+  image-rendering: pixelated;
+  color: var(--bg);
+  box-sizing: border-box;
+}
+
+/* Pixel Buttons */
+.pixel-btn {
+  font-family: 'Quietpage', monospace;
+  font-size: 20px;
+  line-height: 1;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #1b1423;
+  cursor: pointer;
+  user-select: none;
+  image-rendering: pixelated;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.pixel-btn-primary {
+  background: var(--green);
+  color: #1b1423;
+  box-shadow: inset 0 -6px #2f7a4f;
+}
+.pixel-btn-primary:hover {
+  background: #58b073;
+}
+
+.pixel-btn-secondary {
+  background: var(--mustard);
+  color: #1b1423;
+  box-shadow: inset 0 -6px #b07a2c;
+}
+.pixel-btn-secondary:hover {
+  background: #eab75c;
+}
+
+.pixel-btn-danger {
+  background: var(--red);
+  color: #f1e3c4;
+  box-shadow: inset 0 -6px #a02e2c;
+}
+.pixel-btn-danger:hover {
+  background: #e4574c;
+}
+
+.pixel-btn:active {
+  box-shadow: none;
+  transform: translateY(4px);
+}
+
+.pixel-btn:focus-visible {
+  outline: 4px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--wood);
+  border: 2px solid var(--bg);
+}
