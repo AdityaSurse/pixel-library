@@ -1,0 +1,450 @@
+{
+ "native_size": [
+  320,
+  192
+ ],
+ "recommended_scale": 4,
+ "tables": [
+  {
+   "id": 0,
+   "x": 34,
+   "y": 88,
+   "w": 52,
+   "h": 27,
+   "lamp": {
+    "x": 60,
+    "y": 91
+   }
+  },
+  {
+   "id": 1,
+   "x": 134,
+   "y": 88,
+   "w": 52,
+   "h": 27,
+   "lamp": {
+    "x": 160,
+    "y": 91
+   }
+  },
+  {
+   "id": 2,
+   "x": 234,
+   "y": 88,
+   "w": 52,
+   "h": 27,
+   "lamp": {
+    "x": 260,
+    "y": 91
+   }
+  },
+  {
+   "id": 3,
+   "x": 34,
+   "y": 144,
+   "w": 52,
+   "h": 27,
+   "lamp": {
+    "x": 60,
+    "y": 147
+   }
+  },
+  {
+   "id": 4,
+   "x": 134,
+   "y": 144,
+   "w": 52,
+   "h": 27,
+   "lamp": {
+    "x": 160,
+    "y": 147
+   }
+  },
+  {
+   "id": 5,
+   "x": 234,
+   "y": 144,
+   "w": 52,
+   "h": 27,
+   "lamp": {
+    "x": 260,
+    "y": 147
+   }
+  }
+ ],
+ "seats": [
+  {
+   "id": "t0s0",
+   "table": 0,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 38,
+    "y": 71
+   },
+   "chair": {
+    "x": 38,
+    "y": 78
+   }
+  },
+  {
+   "id": "t0s1",
+   "table": 0,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 64,
+    "y": 71
+   },
+   "chair": {
+    "x": 64,
+    "y": 78
+   }
+  },
+  {
+   "id": "t0s2",
+   "table": 0,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 38,
+    "y": 91
+   },
+   "chair": {
+    "x": 38,
+    "y": 108
+   }
+  },
+  {
+   "id": "t0s3",
+   "table": 0,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 64,
+    "y": 91
+   },
+   "chair": {
+    "x": 64,
+    "y": 108
+   }
+  },
+  {
+   "id": "t1s0",
+   "table": 1,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 138,
+    "y": 71
+   },
+   "chair": {
+    "x": 138,
+    "y": 78
+   }
+  },
+  {
+   "id": "t1s1",
+   "table": 1,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 164,
+    "y": 71
+   },
+   "chair": {
+    "x": 164,
+    "y": 78
+   }
+  },
+  {
+   "id": "t1s2",
+   "table": 1,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 138,
+    "y": 91
+   },
+   "chair": {
+    "x": 138,
+    "y": 108
+   }
+  },
+  {
+   "id": "t1s3",
+   "table": 1,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 164,
+    "y": 91
+   },
+   "chair": {
+    "x": 164,
+    "y": 108
+   }
+  },
+  {
+   "id": "t2s0",
+   "table": 2,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 238,
+    "y": 71
+   },
+   "chair": {
+    "x": 238,
+    "y": 78
+   }
+  },
+  {
+   "id": "t2s1",
+   "table": 2,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 264,
+    "y": 71
+   },
+   "chair": {
+    "x": 264,
+    "y": 78
+   }
+  },
+  {
+   "id": "t2s2",
+   "table": 2,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 238,
+    "y": 91
+   },
+   "chair": {
+    "x": 238,
+    "y": 108
+   }
+  },
+  {
+   "id": "t2s3",
+   "table": 2,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 264,
+    "y": 91
+   },
+   "chair": {
+    "x": 264,
+    "y": 108
+   }
+  },
+  {
+   "id": "t3s0",
+   "table": 3,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 38,
+    "y": 127
+   },
+   "chair": {
+    "x": 38,
+    "y": 134
+   }
+  },
+  {
+   "id": "t3s1",
+   "table": 3,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 64,
+    "y": 127
+   },
+   "chair": {
+    "x": 64,
+    "y": 134
+   }
+  },
+  {
+   "id": "t3s2",
+   "table": 3,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 38,
+    "y": 147
+   },
+   "chair": {
+    "x": 38,
+    "y": 164
+   }
+  },
+  {
+   "id": "t3s3",
+   "table": 3,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 64,
+    "y": 147
+   },
+   "chair": {
+    "x": 64,
+    "y": 164
+   }
+  },
+  {
+   "id": "t4s0",
+   "table": 4,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 138,
+    "y": 127
+   },
+   "chair": {
+    "x": 138,
+    "y": 134
+   }
+  },
+  {
+   "id": "t4s1",
+   "table": 4,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 164,
+    "y": 127
+   },
+   "chair": {
+    "x": 164,
+    "y": 134
+   }
+  },
+  {
+   "id": "t4s2",
+   "table": 4,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 138,
+    "y": 147
+   },
+   "chair": {
+    "x": 138,
+    "y": 164
+   }
+  },
+  {
+   "id": "t4s3",
+   "table": 4,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 164,
+    "y": 147
+   },
+   "chair": {
+    "x": 164,
+    "y": 164
+   }
+  },
+  {
+   "id": "t5s0",
+   "table": 5,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 238,
+    "y": 127
+   },
+   "chair": {
+    "x": 238,
+    "y": 134
+   }
+  },
+  {
+   "id": "t5s1",
+   "table": 5,
+   "side": "far",
+   "facing": "viewer",
+   "avatar": {
+    "x": 264,
+    "y": 127
+   },
+   "chair": {
+    "x": 264,
+    "y": 134
+   }
+  },
+  {
+   "id": "t5s2",
+   "table": 5,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 238,
+    "y": 147
+   },
+   "chair": {
+    "x": 238,
+    "y": 164
+   }
+  },
+  {
+   "id": "t5s3",
+   "table": 5,
+   "side": "near",
+   "facing": "away",
+   "avatar": {
+    "x": 264,
+    "y": 147
+   },
+   "chair": {
+    "x": 264,
+    "y": 164
+   }
+  }
+ ],
+ "entrance": {
+  "x": 21,
+  "y": 66
+ },
+ "avatar_frame": {
+  "w": 18,
+  "h": 22,
+  "frames": [
+   "front_study_a",
+   "front_study_b",
+   "front_break_a",
+   "front_break_b",
+   "back_study_a",
+   "back_study_b",
+   "back_break_a",
+   "back_break_b"
+  ],
+  "fps": 2
+ },
+ "draw_order": [
+  "library_bg",
+  "far-seat avatars",
+  "near-seat avatars",
+  "chair_near over each occupied near seat",
+  "lighting_overlay",
+  "bubbles + name tags"
+ ],
+ "presets": [
+  "aditya",
+  "meera",
+  "kabir",
+  "zoya",
+  "rohan",
+  "tara",
+  "ishaan",
+  "anya"
+ ]
+}

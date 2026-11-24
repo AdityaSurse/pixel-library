@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Library assets</title>
+<style>
+/* VOICE: cosy, late-night, quietly playful
+   IDEA: a library reading room after dark, seen through a pixel window
+   PICTURE: the live room itself, with seats you can click and a shared timer
+   COLOUR and TYPE: ink-plum night, warm wood, lamp-gold accent, tomato red; Quietpage pixel font
+   LAYOUT: room first, timer panel under it, then the asset shelves */
+@font-face{font-family:Quietpage;src:url(fonts/Quietpage.ttf) format("truetype")}
+:root{color-scheme:dark;--bg:#1b1423;--bg2:#241a2e;--wood:#5c3a26;--ink:#f1e3c4;--dim:#b9a98a;--gold:#ffe2a0;--red:#d9463b}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:clip}
+.px{font-family:Quietpage,monospace;-webkit-font-smoothing:none;font-smooth:never}
+img,canvas{image-rendering:pixelated}
+.band{padding:clamp(20px,3vw,40px) max(4vw,14px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:40px;line-height:1.05;margin:0 0 6px;font-weight:400}
+h2{font-size:30px;line-height:1.1;margin:0 0 14px;font-weight:400;color:var(--gold)}
+.lede{color:var(--dim);margin:0 0 18px;max-width:62ch}
+.stage{position:relative;border:4px solid #000;outline:4px solid var(--wood);background:#000;cursor:pointer}
+.stage canvas{display:block;width:100%;height:auto;aspect-ratio:320/192}
+.hint{position:absolute;left:8px;bottom:8px;background:#1b1423dd;padding:2px 8px;font-size:20px;pointer-events:none}
+.panel{border:32px solid transparent;border-image:url(ui/panel_9slice.png) 8 fill / 32px;image-rendering:pixelated;color:#1b1423}
+.dock{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;margin-top:22px}
+@media(max-width:760px){.dock{grid-template-columns:minmax(0,1fr)}}
+.timer{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px}
+.time{font-size:60px;line-height:1}
+.mode{font-size:20px}
+.bar{height:16px;border:4px solid #1b1423;background:#3a2419;margin:10px 0 12px}
+.bar i{display:block;height:100%;background:var(--red);box-shadow:inset 0 4px #f07a5e}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:20px Quietpage,monospace;min-height:44px;padding:0 16px;border:4px solid #1b1423;background:#4fa36a;color:#1b1423;box-shadow:inset 0 -6px #2f7a4f;cursor:pointer}
+button.alt{background:#e0a84a;box-shadow:inset 0 -6px #b07a2c}
+button.off{background:#d9c69e;box-shadow:inset 0 -6px #b9a98a}
+button:active{box-shadow:none;transform:translateY(4px)}
+button:focus-visible{outline:4px solid var(--gold);outline-offset:2px}
+.who{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.who button{padding:2px;min-height:0;background:#f4ecd8;box-shadow:none;border-width:3px;width:60px;height:56px}
+.who button[aria-pressed=true]{background:#ffe2a0;border-color:#d9463b}
+.who img{width:54px;height:48px;display:block}
+.small{font-size:20px;margin:0 0 4px}
+.note{font-size:14px;color:#5c3a26;margin:10px 0 0}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.card{background:var(--bg2);border:4px solid #000;outline:2px solid #3a2419;padding:14px}
+.card .art{background:#2f4a44;display:grid;place-items:center;padding:14px;min-height:150px}
+.card .art.light{background:#f1e3c4}
+.card .art img{max-width:100%;height:auto}
+.card h3{font:400 20px Quietpage,monospace;margin:10px 0 2px;color:var(--gold)}
+.card p{margin:0;color:var(--dim);font-size:14px}
+code{font-size:13px;color:var(--gold);overflow-wrap:anywhere}
+ol{padding-left:1.3em;color:var(--dim);max-width:70ch}ol b{color:var(--ink);font-weight:500}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<section class="band"><div class="wrap">
+  <h1 class="px">Pixel Library</h1>
+  <p class="lede">The asset pack, already working. Tap an empty chair to sit down, pick your avatar, then start a Pomodoro and the whole room switches between studying and break poses together.</p>
+  <div class="stage" id="stage"><canvas id="cv" width="320" height="192" aria-label="Pixel library reading room"></canvas><div class="hint px" id="hint">Tap a chair to sit</div></div>
+  <div class="dock">
+    <div class="panel">
+      <div class="timer"><span class="time px" id="time">25:00</span><span class="mode px" id="mode">Focus</span></div>
+      <div class="bar"><i id="bar" style="width:0%"></i></div>
+      <div class="btns">
+        <button id="go">Start</button><button class="alt" id="reset">Reset</button><button class="off" id="fast" aria-pressed="false">Demo speed</button>
+      </div>
+      <p class="note">Everyone at the tables shares this timer. Demo speed runs a 25-minute session in about 25 seconds.</p>
+    </div>
+    <div class="panel">
+      <p class="small px">Your avatar</p>
+      <div class="who" id="who"></div>
+      <p class="note">The other three readers are sample friends, there to show how a full room looks.</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" style="background:#160f1d"><div class="wrap">
+  <h2 class="px">What's on the shelves</h2>
+  <div class="shelf" id="shelf"></div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2 class="px">Drawing order</h2>
+  <ol>
+    <li><b>library_bg.png</b> draws the room, tables, lamps and empty chairs.</li>
+    <li><b>Far-seat avatars</b> come next, using frames 0–3 (facing you).</li>
+    <li><b>Near-seat avatars</b> use frames 4–7 (back view). Then draw <b>chair_near.png</b> again on top, so the backrest sits in front of them.</li>
+    <li><b>lighting_overlay.png</b> goes over everything, then bubbles and name tags.</li>
+    <li>Every coordinate lives in <code>layout.json</code>, in native pixels. Scale the canvas with <code>image-rendering: pixelated</code>.</li>
+  </ol>
+</div></section>
+
+<script>
+{
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const load = s => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = s; });
+const NAMES = ["aditya","meera","kabir","zoya","rohan","tara","ishaan","anya"];
+const FOCUS = 25 * 60, BREAK = 5 * 60;
+let A = {}, L = null, me = { preset: 0, seat: null }, hover = null;
+const bots = [{ preset: 1, seat: 't1s1' }, { preset: 3, seat: 't2s0' }, { preset: 5, seat: 't4s3' }];
+const T = { mode: 'focus', left: FOCUS, running: false, fast: false };
+
+function seatAt(mx, my) {
+  return L.seats.find(s => mx >= s.avatar.x + 1 && mx < s.avatar.x + 17 && my >= s.avatar.y + 2 && my < s.avatar.y + (s.side === 'far' ? 22 : 30));
+}
+function taken(id) { return me.seat === id || bots.some(b => b.seat === id); }
+
+function textAt(str, x, y, col) {
+  // draws with the glyph atlas, tinted
+  let w = 0; for (const ch of str) w += (L.font.glyphs[ch] || L.font.glyphs['?']).w + 1;
+  const off = document.createElement('canvas'); off.width = w; off.height = 10;
+  const o = off.getContext('2d'); let cx = 0;
+  for (const ch of str) { const g = L.font.glyphs[ch] || L.font.glyphs['?']; o.drawImage(A.atlas, g.x, g.y, g.w, 9, cx, 0, g.w, 9); cx += g.w + 1; }
+  o.globalCompositeOperation = 'source-in'; o.fillStyle = col; o.fillRect(0, 0, w, 10);
+  ctx.fillStyle = '#1b1423'; ctx.fillRect(x - 2, y - 1, w + 3, 9);
+  ctx.drawImage(off, x, y);
+  return w;
+}
+
+function draw(t) {
+  const tick = Math.floor(t / 500) % 2;
+  ctx.drawImage(A.bg, 0, 0);
+  const people = [...bots.map(b => ({ ...b })), ...(me.seat ? [{ ...me, you: true }] : [])]
+    .map(p => ({ ...p, s: L.seats.find(s => s.id === p.seat) }))
+    .sort((a, b) => (a.s.side === 'near') - (b.s.side === 'near') || a.s.avatar.y - b.s.avatar.y);
+  const study = T.mode === 'focus';
+  for (const p of people) {
+    const base = (p.s.side === 'far' ? 0 : 4) + (study ? 0 : 2);
+    const f = base + ((tick + (p.preset % 2)) % 2) * (study && !T.running ? 0 : 1);
+    ctx.drawImage(A.sheet, f * 18, p.preset * 22, 18, 22, p.s.avatar.x, p.s.avatar.y, 18, 22);
+    if (p.s.side === 'near') ctx.drawImage(A.chair, p.s.chair.x, p.s.chair.y);
+  }
+  ctx.drawImage(A.light, 0, 0);
+  for (const p of people) {
+    const b = study ? (T.running ? A.b_fire : null) : A.b_coffee;
+    const bx = p.s.avatar.x + 2, by = p.s.avatar.y - 14 + (tick && !study ? -1 : 0);
+    if (b && (p.you || !study)) ctx.drawImage(b, bx, by);
+    if (p.you) { const lbl = 'you'; textAt(lbl, p.s.avatar.x + 9 - 6, p.s.avatar.y + (p.s.side === 'far' ? 0 : -1) - (b ? 24 : 10), '#ffe2a0'); }
+  }
+  if (hover && !taken(hover.id)) {
+    const x = hover.avatar.x + 4, y = hover.avatar.y + (hover.side === 'far' ? 2 : 6) + tick;
+    ctx.drawImage(A.plus, x, y);
+  }
+  requestAnimationFrame(draw);
+}
+
+function pos(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * 320 / r.width, (e.clientY - r.top) * 192 / r.height]; }
+cv.addEventListener('mousemove', e => { if (!L) return; hover = seatAt(...pos(e)) || null; });
+cv.addEventListener('mouseleave', () => hover = null);
+cv.addEventListener('click', e => {
+  if (!L) return; const s = seatAt(...pos(e)); if (!s || taken(s.id)) return;
+  me.seat = s.id; document.getElementById('hint').textContent = 'Seated at table ' + (s.table + 1) + '. Start the timer below';
+});
+
+const $ = id => document.getElementById(id);
+function fmt(n) { n = Math.max(0, Math.ceil(n)); return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0'); }
+function paint() {
+  $('time').textContent = fmt(T.left);
+  $('mode').textContent = T.mode === 'focus' ? 'Focus' : 'Break';
+  const tot = T.mode === 'focus' ? FOCUS : BREAK;
+  $('bar').style.width = (100 * (1 - T.left / tot)).toFixed(1) + '%';
+  $('bar').style.background = T.mode === 'focus' ? '#d9463b' : '#4fa36a';
+  $('go').textContent = T.running ? 'Pause' : 'Start';
+}
+let last = performance.now();
+setInterval(() => {
+  const now = performance.now(), dt = (now - last) / 1000; last = now;
+  if (T.running) {
+    T.left -= dt * (T.fast ? 60 : 1);
+    if (T.left <= 0) { T.mode = T.mode === 'focus' ? 'break' : 'focus'; T.left = T.mode === 'focus' ? FOCUS : BREAK; }
+  }
+  paint();
+}, 100);
+$('go').onclick = () => { T.running = !T.running; paint(); };
+$('reset').onclick = () => { T.running = false; T.mode = 'focus'; T.left = FOCUS; paint(); };
+$('fast').onclick = () => { T.fast = !T.fast; $('fast').setAttribute('aria-pressed', T.fast); $('fast').className = T.fast ? 'alt' : 'off'; };
+
+$('who').innerHTML = NAMES.map((n, i) => `<button aria-pressed="${i === 0}" aria-label="Avatar ${n}" data-i="${i}"><img alt="" src="" data-i="${i}"></button>`).join('');
+$('who').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; me.preset = +b.dataset.i;
+  for (const x of $('who').children) x.setAttribute('aria-pressed', x === b);
+});
+
+const SHELF = [
+  ['previews/library_scene@4x.png', 'Library room', 'library_bg.png · 320×192 · 6 tables, 24 seats', ''],
+  ['sprites/avatars/avatars_sheet@4x.png', 'Avatars', '8 presets × 8 frames · study, break, front and back', ''],
+  ['sprites/avatars/avatar_heads@4x.png', 'Head icons', 'For the "who\'s in the room" list', ''],
+  ['sprites/furniture/table@4x.png', 'Table', 'table.png · 54×29', ''],
+  ['sprites/furniture/desk_lamp@4x.png', 'Banker\'s lamp', 'desk_lamp.png · 16×13', ''],
+  ['sprites/furniture/chair_near@4x.png', 'Chairs', 'chair_near.png and chair_far.png', ''],
+  ['icons/icons_sheet@4x.png', 'Icons', '16 icons, 1px ink outline', ''],
+  ['ui/panel_9slice@4x.png', 'Panel', '9-slice · 8px borders · used on this page', ''],
+  ['ui/button_primary_normal@4x.png', 'Buttons', 'primary, secondary, danger × 3 states', ''],
+  ['ui/bubble_coffee@4x.png', 'Status bubbles', 'book, coffee, zzz, fire, tomato, heart', ''],
+  ['fonts/quietpage_specimen@4x.png', 'Quietpage font', 'Quietpage.ttf plus a canvas glyph atlas', 'light'],
+  ['ui/palette@4x.png', 'Palette', '68 colours · palette.json', ''],
+];
+$('shelf').innerHTML = SHELF.map(([src, t, d, cls]) => `<div class="card"><div class="art ${cls}"><img src="${src}" alt="${t}" loading="lazy"></div><h3>${t}</h3><p>${d}</p></div>`).join('');
+
+Promise.all([
+  load('backgrounds/library_bg.png'), load('backgrounds/lighting_overlay.png'), load('sprites/avatars/avatars_sheet.png'),
+  load('sprites/furniture/chair_near.png'), load('ui/bubble_fire.png'), load('ui/bubble_coffee.png'), load('icons/plus.png'),
+  load('fonts/quietpage_atlas.png'), fetch('layout.json').then(r => r.json()), fetch('fonts/quietpage_atlas.json').then(r => r.json())
+]).then(([bg, light, sheet, chair, bf, bc, plus, atlas, layout, fnt]) => {
+  A = { bg, light, sheet, chair, b_fire: bf, b_coffee: bc, plus, atlas }; L = layout; L.font = fnt;
+  const c2 = document.createElement('canvas'); c2.width = 18; c2.height = 16; const x2 = c2.getContext('2d');
+  document.querySelectorAll('#who img').forEach(img => {
+    x2.clearRect(0, 0, 18, 16); x2.drawImage(sheet, 36, +img.dataset.i * 22, 18, 16, 0, 0, 18, 16); img.src = c2.toDataURL();
+  });
+  paint(); requestAnimationFrame(draw);
+});
+}
+</script>
+</body>
+</html>
