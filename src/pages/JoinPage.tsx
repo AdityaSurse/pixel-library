@@ -76,7 +76,11 @@ export const JoinPage: React.FC = () => {
       console.error('Sign-in error:', err);
       const errCode = (err as { code?: string })?.code;
 
-      if (
+      if (errCode === 'auth/unauthorized-domain') {
+        setErrorMessage(
+          'This domain is not authorized in Firebase. Please add your Vercel URL in Firebase Console -> Authentication -> Settings -> Authorized domains.'
+        );
+      } else if (
         errCode === 'auth/popup-blocked' ||
         errCode === 'auth/cancelled-popup-request'
       ) {
@@ -91,8 +95,11 @@ export const JoinPage: React.FC = () => {
           'Network connection interrupted. Please check your internet connection and try again.'
         );
       } else {
+        const detail = (err as { message?: string })?.message || '';
         setErrorMessage(
-          'Unable to sign in right now. Please try again or check your browser popup settings.'
+          detail
+            ? `Sign-in error: ${detail}`
+            : 'Unable to sign in right now. Please check your browser popup settings and authorized domains.'
         );
       }
     }
