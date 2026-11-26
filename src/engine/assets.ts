@@ -83,7 +83,12 @@ export type ImageKey =
   | 'music'
   | 'quietpage_atlas'
   | 'progress_empty'
-  | 'progress_full';
+  | 'progress_full'
+  | 'note'
+  | 'note_done'
+  | 'note_missed'
+  | 'goal_card_pinned'
+  | 'goal_card_pinned_4x';
 
 const IMAGE_PATHS: Record<ImageKey, string> = {
   bg: '/pixel-library-assets/backgrounds/library_bg.png',
@@ -115,6 +120,11 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   quietpage_atlas: '/pixel-library-assets/fonts/quietpage_atlas.png',
   progress_empty: '/pixel-library-assets/ui/progress_empty.png',
   progress_full: '/pixel-library-assets/ui/progress_full.png',
+  note: '/pixel-library-themes/goal-card/note.png',
+  note_done: '/pixel-library-themes/goal-card/note_done.png',
+  note_missed: '/pixel-library-themes/goal-card/note_missed.png',
+  goal_card_pinned: '/pixel-library-themes/goal-card/goal_card_pinned.png',
+  goal_card_pinned_4x: '/pixel-library-themes/goal-card/goal_card_pinned@4x.png',
 };
 
 export const images: Partial<Record<ImageKey, HTMLImageElement>> = {};

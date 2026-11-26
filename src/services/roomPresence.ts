@@ -11,6 +11,7 @@ import {
 } from 'firebase/database';
 import { rtdb } from '../lib/firebase';
 import { UserProfile } from '../context/AuthContext';
+import { LiveReaderGoal } from './goalService';
 
 export type ReaderStatus = 'browsing' | 'studying' | 'break' | 'away';
 
@@ -23,6 +24,7 @@ export interface ReaderPresence {
   status: ReaderStatus;
   joinedAt: number | object;
   lastActive: number | object;
+  goal?: LiveReaderGoal | null;
 }
 
 export type RoomPresenceMap = Record<string, ReaderPresence>;
@@ -198,6 +200,7 @@ export function initRoomPresence(
 
       await set(ref(rtdb, `rooms/${code}/presence/${uid}/seatId`), null);
       await set(ref(rtdb, `rooms/${code}/presence/${uid}/status`), 'browsing');
+      await remove(ref(rtdb, `rooms/${code}/presence/${uid}/goal`));
     } catch (err) {
       console.error('Error standing up:', err);
     }

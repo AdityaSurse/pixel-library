@@ -94,7 +94,7 @@ export const ShareRoomModal: React.FC<ShareRoomModalProps> = ({
             padding: '4px 8px',
           }}
         >
-          ✕
+          X
         </button>
 
         <div className="px-30" style={{ color: '#1b1423' }}>

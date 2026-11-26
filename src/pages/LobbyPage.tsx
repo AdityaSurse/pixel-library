@@ -15,6 +15,7 @@ import { ShareRoomModal } from '../components/lobby/ShareRoomModal';
 import { RecentRoomsList } from '../components/lobby/RecentRoomsList';
 import { PixelStepper } from '../components/common/PixelStepper';
 import { ThemeId, getThemeList } from '../engine/themes';
+import { getWeeklyGoalsDoneCount } from '../services/goalService';
 
 const ALLOWED_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
@@ -34,6 +35,15 @@ export const LobbyPage: React.FC = () => {
   useEffect(() => {
     document.title = 'Front Desk · Pixel Library';
   }, []);
+
+  const [weeklyGoalsDone, setWeeklyGoalsDone] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user) return;
+    getWeeklyGoalsDoneCount(user.uid)
+      .then((count) => setWeeklyGoalsDone(count))
+      .catch((err) => console.error('Failed to load weekly goals:', err));
+  }, [user]);
 
   // Create Room state
   const defaultRoomName = useMemo(() => {
@@ -327,6 +337,29 @@ export const LobbyPage: React.FC = () => {
                 style={{ imageRendering: 'pixelated' }}
               />
               <span>{profile?.stats?.streakDays ?? 0} day streak</span>
+            </div>
+
+            {/* Goals done this week chip */}
+            <div
+              className="px-10"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: '#f6edc8',
+                border: '2px solid #1b1423',
+                padding: '4px 8px',
+                color: '#1b1423',
+              }}
+            >
+              <img
+                src="/pixel-library-assets/icons/check.png"
+                alt=""
+                width="14"
+                height="14"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <span>Goals done: {weeklyGoalsDone}</span>
             </div>
           </div>
 

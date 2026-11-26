@@ -104,7 +104,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
             className="pixel-btn pixel-btn-secondary"
             style={{ padding: '2px 8px', minHeight: '26px' }}
           >
-            ✕
+            X
           </button>
         </div>
 

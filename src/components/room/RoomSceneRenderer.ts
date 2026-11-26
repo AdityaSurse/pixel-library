@@ -10,14 +10,15 @@ import {
   drawChairNear,
   drawBubbleCoffee,
   drawBubbleFire,
+  drawBubbleHeart,
   drawBubbleZzz,
   drawBubbleBook,
   drawBubbleTomato,
   drawPlus,
 } from '../../engine/sprites';
-import { drawAtlasNameTag } from '../../engine/atlasText';
+import { drawAtlasNameTag, drawGoalSpeechBubble } from '../../engine/atlasText';
 import { RoomPresenceMap, RoomSeatsMap } from '../../services/roomPresence';
-import { getUserPhaseOffset } from './roomGeometry';
+import { getUserPhaseOffset, getDeskNoteCoords } from './roomGeometry';
 
 export interface RoomRenderParams {
   presence: RoomPresenceMap;
@@ -33,6 +34,13 @@ export interface RoomRenderParams {
   isTimerRunning?: boolean;
   focusStartMs?: number;
   streakFireUntilMs?: number;
+  heartBubbleUntilMs?: number;
+  heartBubbleUid?: string | null;
+  activeNoteTooltip?: {
+    seatId: string;
+    username: string;
+    text: string;
+  } | null;
   themeId?: ThemeId;
   timeOfDay?: ThemeTime;
   transition?: {
@@ -68,6 +76,9 @@ export function renderRoomScene(
     isTimerRunning = false,
     focusStartMs = 0,
     streakFireUntilMs = 0,
+    heartBubbleUntilMs = 0,
+    heartBubbleUid = null,
+    activeNoteTooltip = null,
     themeId = 'classic',
     timeOfDay = 'night',
     transition = null,
@@ -266,6 +277,24 @@ export function renderRoomScene(
     ctx.globalAlpha = 1.0;
   }
 
+  // Layer 5.5: Desk Notes for Seated Readers
+  for (const seat of layout.seats) {
+    const uid = seats[seat.id];
+    if (!uid) continue;
+    const reader = presence[uid];
+    if (!reader || !reader.goal) continue;
+
+    const noteCoords = getDeskNoteCoords(seat);
+    const noteImg =
+      reader.goal.status === 'done'
+        ? getImage('note_done')
+        : reader.goal.status === 'missed'
+        ? getImage('note_missed')
+        : getImage('note');
+
+    ctx.drawImage(noteImg, noteCoords.x, noteCoords.y);
+  }
+
   // Layer 6: Status Bubbles & Name Tags
   for (const seat of layout.seats) {
     const uid = seats[seat.id];
@@ -280,6 +309,12 @@ export function renderRoomScene(
 
     if (reader.status === 'away') {
       drawBubbleZzz(ctx, bubbleX, bubbleY);
+    } else if (
+      heartBubbleUntilMs &&
+      timeMs < heartBubbleUntilMs &&
+      (heartBubbleUid ? uid === heartBubbleUid : isSelf)
+    ) {
+      drawBubbleHeart(ctx, bubbleX, bubbleY);
     } else if (isSelf && streakFireUntilMs && timeMs < streakFireUntilMs) {
       drawBubbleFire(ctx, bubbleX, bubbleY);
     } else if (timerMode === 'break') {
@@ -333,6 +368,21 @@ export function renderRoomScene(
         ctx.lineWidth = 1;
         ctx.strokeRect(seat.chair.x - 1.5, seat.avatar.y - 1.5, 21, 28);
       }
+    }
+  }
+
+  // 4. Desk note speech-bubble tooltip on hover / tap
+  if (activeNoteTooltip) {
+    const seat = layout.seats.find((s) => s.id === activeNoteTooltip.seatId);
+    if (seat) {
+      const noteCoords = getDeskNoteCoords(seat);
+      drawGoalSpeechBubble(
+        ctx,
+        activeNoteTooltip.username,
+        activeNoteTooltip.text,
+        noteCoords.x + 5,
+        noteCoords.y
+      );
     }
   }
 }

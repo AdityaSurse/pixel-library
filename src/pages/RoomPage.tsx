@@ -27,13 +27,21 @@ import {
 } from '../services/roomTimer';
 import { playPhaseEndChime } from '../services/audioChime';
 import { recordPomodoroCompletion } from '../services/userStats';
-import { getSeatAtCoords } from '../components/room/roomGeometry';
+import { getSeatAtCoords, getNoteAtCoords } from '../components/room/roomGeometry';
 import { renderRoomScene } from '../components/room/RoomSceneRenderer';
 import { RoomHUD } from '../components/room/RoomHUD';
 import { WhosHereDrawer } from '../components/room/WhosHereDrawer';
 import { RoomClockPanel } from '../components/room/RoomClockPanel';
 import { RoomSettingsModal } from '../components/room/RoomSettingsModal';
 import { RoomToasts, ToastMessage } from '../components/room/RoomToasts';
+import { GoalModal } from '../components/room/GoalModal';
+import { GoalFinishModal } from '../components/room/GoalFinishModal';
+import {
+  setReaderGoal,
+  updateReaderGoalStatus,
+  clearReaderGoal,
+  saveCompletedGoalToFirestore,
+} from '../services/goalService';
 
 interface RoomData {
   code: string;
@@ -72,6 +80,17 @@ export const RoomPage: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Goal & desk note state
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [isGoalFinishModalOpen, setIsGoalFinishModalOpen] = useState(false);
+  const [pendingFinishGoal, setPendingFinishGoal] = useState<{ text: string } | null>(null);
+  const [heartBubbleUntilMs, setHeartBubbleUntilMs] = useState(0);
+  const [activeNoteTooltip, setActiveNoteTooltip] = useState<{
+    seatId: string;
+    username: string;
+    text: string;
+  } | null>(null);
 
   // Time of Day (Auto / Day / Night) and 2-second crossfade
   const { timeOfDay, preference: timePreference, setPreference: setTimePreference } = useTimeOfDay();
@@ -246,6 +265,42 @@ export const RoomPage: React.FC = () => {
             setFocusStartMs(performance.now());
           }
         }
+
+        // Goal prompt on focus -> break
+        if (prev && prev.mode === 'focus' && newTimer.mode === 'break') {
+          if (user) {
+            const myPresence = presence[user.uid];
+            if (myPresence?.seatId && myPresence.goal && myPresence.goal.status === 'open') {
+              setPendingFinishGoal({ text: myPresence.goal.text });
+              setIsGoalFinishModalOpen(true);
+            }
+          }
+        }
+
+        // Break ended, next focus starting: break -> focus
+        if (prev && prev.mode === 'break' && newTimer.mode === 'focus') {
+          if (user && pendingFinishGoal) {
+            // Auto-mark missed if unanswered during break
+            saveCompletedGoalToFirestore(user.uid, {
+              text: pendingFinishGoal.text,
+              status: 'missed',
+              roomCode: cleanCode,
+              theme: room?.theme || 'classic',
+            }).catch(console.error);
+            updateReaderGoalStatus(cleanCode, user.uid, 'missed').catch(console.error);
+            setIsGoalFinishModalOpen(false);
+            setPendingFinishGoal(null);
+          }
+
+          // Clear desk note when next focus phase starts
+          if (user) {
+            clearReaderGoal(cleanCode, user.uid).catch(console.error);
+            const myPresence = presence[user.uid];
+            if (myPresence?.seatId) {
+              setIsGoalModalOpen(true);
+            }
+          }
+        }
       }
 
       prevTimerRef.current = newTimer;
@@ -255,7 +310,7 @@ export const RoomPage: React.FC = () => {
     return () => {
       unsubTimer();
     };
-  }, [cleanCode, roomNotFound, profile, addToast]);
+  }, [cleanCode, roomNotFound, profile, addToast, user, presence, pendingFinishGoal, room?.theme]);
 
   // 4. Timer Countdown Loop & Auto-Advancement
   useEffect(() => {
@@ -271,16 +326,16 @@ export const RoomPage: React.FC = () => {
         const secs = Math.max(0, Math.ceil(rem / 1000));
         const m = Math.floor(secs / 60);
         const s = secs % 60;
-        const icon = timer.mode === 'focus' ? '🍅' : '☕';
+        const modeLabel = timer.mode === 'focus' ? 'Focus' : 'Break';
         const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        document.title = `${icon} ${formatted} · Pixel Library`;
+        document.title = `${modeLabel} ${formatted} · Pixel Library`;
       } else if (timer && timer.startedAt === null && timer.pausedRemainingMs !== null) {
         // Paused
         const secs = Math.max(0, Math.ceil(rem / 1000));
         const m = Math.floor(secs / 60);
         const s = secs % 60;
         const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        document.title = `⏸ ${formatted} · Pixel Library`;
+        document.title = `Paused ${formatted} · Pixel Library`;
       } else {
         // Idle
         document.title = `${room.name || 'Study Room'} · Pixel Library`;
@@ -361,13 +416,43 @@ export const RoomPage: React.FC = () => {
   }, [presence, addToast]);
 
   // 6. Pointer interaction
-  const handlePointerMoveNative = useCallback((coords: NativePointerCoords | null) => {
-    const seat = getSeatAtCoords(coords);
-    setHoveredSeatId(seat ? seat.id : null);
-  }, []);
+  const handlePointerMoveNative = useCallback(
+    (coords: NativePointerCoords | null) => {
+      // Check for desk note hover first
+      const noteTarget = getNoteAtCoords(coords, presence, seats);
+      if (noteTarget) {
+        setActiveNoteTooltip({
+          seatId: noteTarget.seat.id,
+          username: noteTarget.reader.username || 'Reader',
+          text: noteTarget.reader.goal?.text || '',
+        });
+        setHoveredSeatId(null);
+        return;
+      } else {
+        setActiveNoteTooltip(null);
+      }
+
+      const seat = getSeatAtCoords(coords);
+      setHoveredSeatId(seat ? seat.id : null);
+    },
+    [presence, seats]
+  );
 
   const handlePointerClickNative = useCallback(
     async (coords: NativePointerCoords) => {
+      // Check for desk note tap
+      const noteTarget = getNoteAtCoords(coords, presence, seats);
+      if (noteTarget) {
+        setActiveNoteTooltip({
+          seatId: noteTarget.seat.id,
+          username: noteTarget.reader.username || 'Reader',
+          text: noteTarget.reader.goal?.text || '',
+        });
+        return;
+      } else {
+        setActiveNoteTooltip(null);
+      }
+
       const seat = getSeatAtCoords(coords);
       if (!seat || !presenceManagerRef.current) return;
 
@@ -378,7 +463,7 @@ export const RoomPage: React.FC = () => {
         squashMapRef.current.set(seat.id, performance.now());
       }
     },
-    [seats]
+    [presence, seats]
   );
 
   // 7. HUD Actions
@@ -386,7 +471,13 @@ export const RoomPage: React.FC = () => {
     if (presenceManagerRef.current) {
       await presenceManagerRef.current.standUp();
     }
-  }, []);
+    if (user) {
+      clearReaderGoal(cleanCode, user.uid).catch(console.error);
+    }
+    setIsGoalFinishModalOpen(false);
+    setIsGoalModalOpen(false);
+    setPendingFinishGoal(null);
+  }, [cleanCode, user]);
 
   const handleLeave = useCallback(async () => {
     if (presenceManagerRef.current) {
@@ -394,8 +485,11 @@ export const RoomPage: React.FC = () => {
       presenceManagerRef.current.cleanup();
       presenceManagerRef.current = null;
     }
+    if (user) {
+      clearReaderGoal(cleanCode, user.uid).catch(console.error);
+    }
     navigate('/lobby');
-  }, [navigate]);
+  }, [cleanCode, user, navigate]);
 
   const handleSelectReader = useCallback((seatId: string | null) => {
     if (seatId) {
@@ -410,7 +504,15 @@ export const RoomPage: React.FC = () => {
     await startTimer(cleanCode, room.focusMinutes, profile.username);
     addToast(`${profile.username} started the timer`, 'info');
     setFocusStartMs(performance.now());
-  }, [cleanCode, room, profile, addToast]);
+
+    // Prompt seated reader if no open goal
+    if (user && presence[user.uid]?.seatId) {
+      const myGoal = presence[user.uid]?.goal;
+      if (!myGoal || myGoal.status !== 'open') {
+        setIsGoalModalOpen(true);
+      }
+    }
+  }, [cleanCode, room, profile, addToast, user, presence]);
 
   const handlePauseTimer = useCallback(async () => {
     if (!profile) return;
@@ -435,6 +537,72 @@ export const RoomPage: React.FC = () => {
     await skipTimer(cleanCode, room.focusMinutes, room.breakMinutes, profile.username);
     addToast(`${profile.username} skipped to next phase`, 'info');
   }, [cleanCode, room, profile, addToast]);
+
+  // Goal actions
+  const handleSaveGoal = useCallback(
+    async (goalText: string) => {
+      if (!user) return;
+      try {
+        await setReaderGoal(cleanCode, user.uid, goalText);
+        setIsGoalModalOpen(false);
+        addToast('Goal pinned to desk', 'info');
+      } catch (err) {
+        console.error('Failed to pin goal:', err);
+        addToast('Failed to pin goal', 'info');
+      }
+    },
+    [user, cleanCode, addToast]
+  );
+
+  const handleClearGoal = useCallback(async () => {
+    if (!user) return;
+    try {
+      await clearReaderGoal(cleanCode, user.uid);
+      setIsGoalModalOpen(false);
+      addToast('Goal removed from desk', 'info');
+    } catch (err) {
+      console.error('Failed to clear goal:', err);
+    }
+  }, [user, cleanCode, addToast]);
+
+  const handleGoalDone = useCallback(async () => {
+    if (!user || !pendingFinishGoal) return;
+    const goalText = pendingFinishGoal.text;
+    try {
+      await saveCompletedGoalToFirestore(user.uid, {
+        text: goalText,
+        status: 'done',
+        roomCode: cleanCode,
+        theme: room?.theme || 'classic',
+      });
+      await updateReaderGoalStatus(cleanCode, user.uid, 'done');
+      setHeartBubbleUntilMs(performance.now() + 3000);
+      setIsGoalFinishModalOpen(false);
+      setPendingFinishGoal(null);
+      addToast('Goal accomplished!', 'info');
+    } catch (err) {
+      console.error('Failed to mark goal done:', err);
+    }
+  }, [user, pendingFinishGoal, cleanCode, room?.theme, addToast]);
+
+  const handleGoalNotYet = useCallback(async () => {
+    if (!user || !pendingFinishGoal) return;
+    const goalText = pendingFinishGoal.text;
+    try {
+      await saveCompletedGoalToFirestore(user.uid, {
+        text: goalText,
+        status: 'missed',
+        roomCode: cleanCode,
+        theme: room?.theme || 'classic',
+      });
+      await updateReaderGoalStatus(cleanCode, user.uid, 'missed');
+      setIsGoalFinishModalOpen(false);
+      setPendingFinishGoal(null);
+      addToast('Goal logged for later', 'info');
+    } catch (err) {
+      console.error('Failed to mark goal missed:', err);
+    }
+  }, [user, pendingFinishGoal, cleanCode, room?.theme, addToast]);
 
   const handleSaveSettings = useCallback(
     async (newFocus: number, newBreak: number, newTheme: ThemeId) => {
@@ -480,6 +648,9 @@ export const RoomPage: React.FC = () => {
         isTimerRunning: Boolean(timer && timer.startedAt !== null),
         focusStartMs,
         streakFireUntilMs,
+        heartBubbleUntilMs,
+        heartBubbleUid: user?.uid || null,
+        activeNoteTooltip,
         themeId: room?.theme || 'classic',
         timeOfDay,
         transition: themeTransition,
@@ -498,6 +669,8 @@ export const RoomPage: React.FC = () => {
       timer,
       focusStartMs,
       streakFireUntilMs,
+      heartBubbleUntilMs,
+      activeNoteTooltip,
       room?.theme,
       timeOfDay,
       themeTransition,
@@ -592,6 +765,7 @@ export const RoomPage: React.FC = () => {
         timePreference={timePreference}
         onTimePreferenceChange={setTimePreference}
         onToggleNames={() => setShowAllNames((prev) => !prev)}
+        onOpenGoal={() => setIsGoalModalOpen(true)}
         onStandUp={handleStandUp}
         onLeave={handleLeave}
       />
@@ -631,6 +805,23 @@ export const RoomPage: React.FC = () => {
 
       {/* Arrival, Departure & Timer Toasts */}
       <RoomToasts toasts={toasts} />
+
+      {/* Session Goal Writing Modal */}
+      <GoalModal
+        isOpen={isGoalModalOpen}
+        initialText={user ? presence[user.uid]?.goal?.text || '' : ''}
+        onSave={handleSaveGoal}
+        onSkip={() => setIsGoalModalOpen(false)}
+        onClear={handleClearGoal}
+      />
+
+      {/* Goal Completion Evaluation Modal */}
+      <GoalFinishModal
+        isOpen={isGoalFinishModalOpen}
+        goalText={pendingFinishGoal?.text || ''}
+        onDone={handleGoalDone}
+        onNotYet={handleGoalNotYet}
+      />
     </div>
   );
 };

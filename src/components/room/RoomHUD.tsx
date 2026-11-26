@@ -37,6 +37,7 @@ interface RoomHUDProps {
   timePreference?: TimePreference;
   onTimePreferenceChange?: (pref: TimePreference) => void;
   onToggleNames: () => void;
+  onOpenGoal?: () => void;
   onStandUp: () => void;
   onLeave: () => void;
 }
@@ -53,6 +54,7 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
   timePreference = 'auto',
   onTimePreferenceChange,
   onToggleNames,
+  onOpenGoal,
   onStandUp,
   onLeave,
 }) => {
@@ -246,6 +248,29 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
         >
           <span className="px-10">NAMES: {showAllNames ? 'ON' : 'OFF'}</span>
         </button>
+
+        {/* Goal Button (visible when seated) */}
+        {isSeated && (
+          <button
+            onClick={onOpenGoal}
+            className="pixel-btn pixel-btn-secondary"
+            style={{
+              minHeight: '36px',
+              padding: '0 10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="Set session goal"
+          >
+            <img
+              src="/pixel-library-assets/icons/book.png"
+              alt=""
+              style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
+            />
+            <span className="px-10">GOAL</span>
+          </button>
+        )}
 
         {/* Stand Up Button (visible when seated) */}
         {isSeated && (

@@ -126,7 +126,7 @@ export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
               fontSize: '10px',
             }}
           >
-            ✕
+            X
           </button>
         </div>
 
@@ -188,6 +188,48 @@ export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
                     {reader.username || 'reader'} {isSelf && '(you)'}
                   </div>
                   <div>{getStatusDisplay(reader.status, reader.seatId)}</div>
+                  {reader.goal?.text && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        marginTop: '2px',
+                        overflow: 'hidden',
+                      }}
+                      title={reader.goal.text}
+                    >
+                      <img
+                        src={
+                          reader.goal.status === 'done'
+                            ? '/pixel-library-themes/goal-card/note_done.png'
+                            : reader.goal.status === 'missed'
+                            ? '/pixel-library-themes/goal-card/note_missed.png'
+                            : '/pixel-library-themes/goal-card/note.png'
+                        }
+                        alt=""
+                        width="10"
+                        height="7"
+                        style={{ imageRendering: 'pixelated', flexShrink: 0 }}
+                      />
+                      <span
+                        className="px-10"
+                        style={{
+                          color:
+                            reader.goal.status === 'done'
+                              ? '#4fa36a'
+                              : reader.goal.status === 'missed'
+                              ? '#d9463b'
+                              : '#b9a98a',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {reader.goal.text}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
