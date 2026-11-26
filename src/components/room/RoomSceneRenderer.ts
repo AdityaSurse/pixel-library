@@ -38,6 +38,7 @@ export interface RoomRenderParams {
   streakFireUntilMs?: number;
   heartBubbleUntilMs?: number;
   heartBubbleUid?: string | null;
+  topReaderUid?: string | null;
   activeNoteTooltip?: {
     seatId: string;
     username: string;
@@ -80,6 +81,7 @@ export function renderRoomScene(
     streakFireUntilMs = 0,
     heartBubbleUntilMs = 0,
     heartBubbleUid = null,
+    topReaderUid = null,
     activeNoteTooltip = null,
     themeId = 'classic',
     timeOfDay = 'night',
@@ -353,6 +355,17 @@ export function renderRoomScene(
         seat.avatar.y - 10,
         textColor
       );
+    }
+
+    // Top reader mini-badge (rank_1.png at 1x, 8x9) above #1's avatar in the room
+    if (topReaderUid && uid === topReaderUid) {
+      const rankImg = getImage('rank_1');
+      if (rankImg) {
+        const badgeY = isHovered || isSelf || showAllNames
+          ? seat.avatar.y - 19
+          : seat.avatar.y - 10;
+        ctx.drawImage(rankImg, seat.avatar.x + 5, badgeY);
+      }
     }
   }
 

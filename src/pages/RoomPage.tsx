@@ -36,6 +36,12 @@ import { RoomSettingsModal } from '../components/room/RoomSettingsModal';
 import { RoomToasts, ToastMessage } from '../components/room/RoomToasts';
 import { GoalModal } from '../components/room/GoalModal';
 import { GoalFinishModal } from '../components/room/GoalFinishModal';
+import { RoomLeaderboardModal } from '../components/room/RoomLeaderboardModal';
+import {
+  recordRoomMemberFocus,
+  subscribeToRoomLeaderboard,
+  RoomMemberRecord,
+} from '../services/leaderboardService';
 import {
   setReaderGoal,
   updateReaderGoalStatus,
@@ -88,6 +94,13 @@ export const RoomPage: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Weekly Leaderboard state
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [leaderboardMembers, setLeaderboardMembers] = useState<RoomMemberRecord[]>([]);
+  const [topLeaderUid, setTopLeaderUid] = useState<string | null>(null);
+  const prevLeaderUidRef = useRef<string | null>(null);
+  const isInitialLeaderboardLoadRef = useRef(true);
 
   // Goal & desk note state
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -176,6 +189,30 @@ export const RoomPage: React.FC = () => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3500);
   }, []);
+
+  // Live weekly leaderboard listener with #1 spot change toast
+  useEffect(() => {
+    if (!cleanCode) return;
+    const unsub = subscribeToRoomLeaderboard(cleanCode, (members, topUid) => {
+      setLeaderboardMembers(members);
+      setTopLeaderUid(topUid);
+
+      if (members.length > 0 && topUid) {
+        if (
+          !isInitialLeaderboardLoadRef.current &&
+          prevLeaderUidRef.current &&
+          prevLeaderUidRef.current !== topUid
+        ) {
+          const newLeader = members[0];
+          addToast(`${newLeader.username} leads the library this week!`, 'info');
+        }
+        prevLeaderUidRef.current = topUid;
+      }
+      isInitialLeaderboardLoadRef.current = false;
+    });
+
+    return unsub;
+  }, [cleanCode, addToast]);
 
   // 1. Real-time Room Snapshot from Firestore
   useEffect(() => {
@@ -398,6 +435,19 @@ export const RoomPage: React.FC = () => {
               }
             })
             .catch(() => {});
+
+          if (profile) {
+            recordRoomMemberFocus(
+              cleanCode,
+              user.uid,
+              {
+                username: profile.username,
+                preset: profile.preset,
+                accessory: profile.accessory,
+              },
+              room.focusMinutes
+            ).catch((err) => console.error('Failed to record member focus session:', err));
+          }
         }
 
         // Concurrency-safe phase advance
@@ -418,7 +468,7 @@ export const RoomPage: React.FC = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [timer, room, cleanCode, user, presence, addToast]);
+  }, [timer, room, cleanCode, user, presence, profile, addToast]);
 
   // 5. Detect arrivals & departures
   useEffect(() => {
@@ -683,6 +733,7 @@ export const RoomPage: React.FC = () => {
         streakFireUntilMs,
         heartBubbleUntilMs,
         heartBubbleUid: user?.uid || null,
+        topReaderUid: topLeaderUid,
         activeNoteTooltip,
         themeId: room?.theme || 'classic',
         timeOfDay,
@@ -703,6 +754,7 @@ export const RoomPage: React.FC = () => {
       focusStartMs,
       streakFireUntilMs,
       heartBubbleUntilMs,
+      topLeaderUid,
       activeNoteTooltip,
       room?.theme,
       timeOfDay,
@@ -799,6 +851,7 @@ export const RoomPage: React.FC = () => {
         onTimePreferenceChange={setTimePreference}
         onToggleNames={() => setShowAllNames((prev) => !prev)}
         onOpenGoal={() => setIsGoalModalOpen(true)}
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onStandUp={handleStandUp}
         onLeave={handleLeave}
       />
@@ -861,6 +914,14 @@ export const RoomPage: React.FC = () => {
         isOpen={celebrationItem !== null}
         item={celebrationItem}
         onDismiss={handleDismissCelebration}
+      />
+
+      {/* Weekly Leaderboard Modal */}
+      <RoomLeaderboardModal
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+        members={leaderboardMembers}
+        currentUid={user?.uid || null}
       />
     </div>
   );

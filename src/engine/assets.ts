@@ -91,7 +91,10 @@ export type ImageKey =
   | 'goal_card_pinned_4x'
   | 'accessories_sheet'
   | 'lock'
-  | 'lock_4x';
+  | 'lock_4x'
+  | 'rank_1'
+  | 'rank_2'
+  | 'rank_3';
 
 const IMAGE_PATHS: Record<ImageKey, string> = {
   bg: '/pixel-library-assets/backgrounds/library_bg.png',
@@ -131,6 +134,9 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   accessories_sheet: '/pixel-library-themes/unlockables/accessories_sheet.png',
   lock: '/pixel-library-themes/badges/lock.png',
   lock_4x: '/pixel-library-themes/badges/lock@4x.png',
+  rank_1: '/pixel-library-themes/leaderboard/rank_1.png',
+  rank_2: '/pixel-library-themes/leaderboard/rank_2.png',
+  rank_3: '/pixel-library-themes/leaderboard/rank_3.png',
 };
 
 export const images: Partial<Record<ImageKey, HTMLImageElement>> = {};

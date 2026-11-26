@@ -38,6 +38,7 @@ interface RoomHUDProps {
   onTimePreferenceChange?: (pref: TimePreference) => void;
   onToggleNames: () => void;
   onOpenGoal?: () => void;
+  onOpenLeaderboard?: () => void;
   onStandUp: () => void;
   onLeave: () => void;
 }
@@ -55,6 +56,7 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
   onTimePreferenceChange,
   onToggleNames,
   onOpenGoal,
+  onOpenLeaderboard,
   onStandUp,
   onLeave,
 }) => {
@@ -247,6 +249,27 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
           }}
         >
           <span className="px-10">NAMES: {showAllNames ? 'ON' : 'OFF'}</span>
+        </button>
+
+        {/* Weekly Leaderboard Button */}
+        <button
+          onClick={onOpenLeaderboard}
+          className="pixel-btn pixel-btn-secondary"
+          style={{
+            minHeight: '36px',
+            padding: '0 10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+          title="Weekly Leaderboard"
+        >
+          <img
+            src="/pixel-library-assets/icons/fire.png"
+            alt=""
+            style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
+          />
+          <span className="px-10">BOARD</span>
         </button>
 
         {/* Goal Button (visible when seated) */}

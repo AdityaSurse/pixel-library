@@ -354,17 +354,16 @@ flowchart LR
     classDef teal fill:#3f7d6e,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
     classDef pink fill:#c86b86,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
 
-    F1["Library Themes (planned)"]:::red --> F2["Day and Night (planned)"]:::mustard
-    F2 --> F3["Session Goal Card (planned)"]:::green
-    F3 --> F4["Study Heatmap (planned)"]:::blue
-    F4 --> F5["Unlockables (planned)"]:::purple
-    F5 --> F6["Room Leaderboard (planned)"]:::pink
+    F1["Library Themes (complete)"]:::green --> F2["Day and Night (complete)"]:::green
+    F2 --> F3["Session Goal Card (complete)"]:::green
+    F3 --> F4["Study Heatmap (complete)"]:::green
+    F4 --> F5["Unlockables (complete)"]:::green
+    F5 --> F6["Room Leaderboard (complete)"]:::green
 ```
 
 ---
 
 ### Library Themes
-*Coming soon*
 
 Room creators can customize their study environment by selecting one of eight illustrated themes during room setup or anytime from room settings. The selected atmosphere synchronizes in real time through Firebase so every reader in the room studies within the exact same cozy visual world.
 
@@ -384,7 +383,6 @@ flowchart LR
 ---
 
 ### Day and Night
-*Coming soon*
 
 Dynamic daylight cycles bring natural time awareness to long study blocks with distinct daytime sunlight and nighttime desk-lamp warmth. Readers can let lighting transition automatically based on server time or switch manually between Day and Night in room settings.
 
@@ -401,7 +399,6 @@ stateDiagram-v2
 ---
 
 ### Session Goal Card
-*Coming soon*
 
 Scholars can write a focused target on an index card pinned directly to their desk before each Pomodoro round begins. When the interval finishes, readers mark the objective as completed or missed, automatically recording the entry into their personal study log.
 
@@ -422,9 +419,23 @@ flowchart LR
 ---
 
 ### Study Heatmap
-*Coming soon*
 
 A retro GitHub-style activity grid visualizes your daily Pomodoro focus sessions throughout the year. Each cell renders at discrete pixel-grid steps, deepening in intensity as more study intervals are completed each day.
+
+```mermaid
+flowchart LR
+    classDef red fill:#d9463b,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef mustard fill:#e0a84a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef green fill:#4fa36a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef blue fill:#4a5fa8,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef purple fill:#7e4a8a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef teal fill:#3f7d6e,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+
+    H1["Focus round counted"]:::red --> H2["Increment day stats"]:::blue
+    H2 --> H3["Firestore days/YYYY-MM-DD"]:::purple
+    H3 --> H4["5 activity levels computed"]:::teal
+    H4 --> H5["26-week study map updated"]:::green
+```
 
 <p align="center">
   <img src="public/pixel-library-themes/heatmap/heatmap_levels@4x.png" alt="Study Heatmap Activity Levels" width="240" style="image-rendering: pixelated; display: block; margin: 0 auto;" />
@@ -435,9 +446,23 @@ A retro GitHub-style activity grid visualizes your daily Pomodoro focus sessions
 ---
 
 ### Unlockables
-*Coming soon*
 
 Consistently studying in the library earns progress toward new library environments, collectible scholar badges, and expressive avatar accessories. As your Pomodoro counts rise and study streaks continue unbroken, milestones unlock automatically on your library card.
+
+```mermaid
+flowchart LR
+    classDef red fill:#d9463b,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef mustard fill:#e0a84a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef green fill:#4fa36a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef blue fill:#4a5fa8,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef purple fill:#7e4a8a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef pink fill:#c86b86,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+
+    U1["Complete Pomodoro sessions"]:::red --> U2["Check unlock milestones"]:::blue
+    U2 --> U3["Unlock themes, accessories, badges"]:::purple
+    U3 --> U4["Pixel confetti celebration"]:::pink
+    U4 --> U5["Equip on library card"]:::green
+```
 
 <p align="center">
   <img src="public/pixel-library-themes/unlockables/accessories_preview@4x.png" alt="Avatar Accessories Preview" width="360" style="image-rendering: pixelated; margin: 8px;" />
@@ -477,7 +502,6 @@ Consistently studying in the library earns progress toward new library environme
 ---
 
 ### Room Leaderboard
-*Coming soon*
 
 A vintage chalkboard hung on the reading room wall tallies weekly focus minutes across all scholars in the room. Friendly academic rivalry helps everyone stay in flow, with top three readers honored by pixel rank medallions that reset cleanly every Monday morning.
 
