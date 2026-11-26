@@ -1,5 +1,10 @@
 import { getImage, layout } from '../../engine/assets';
 import {
+  ThemeId,
+  getCachedTheme,
+  drawBayerDitherDissolve,
+} from '../../engine/themes';
+import {
   drawAvatar,
   drawChairNear,
   drawBubbleCoffee,
@@ -27,6 +32,13 @@ export interface RoomRenderParams {
   isTimerRunning?: boolean;
   focusStartMs?: number;
   streakFireUntilMs?: number;
+  themeId?: ThemeId;
+  transition?: {
+    fromThemeId: ThemeId;
+    toThemeId: ThemeId;
+    startMs: number;
+    durationMs: number;
+  } | null;
 }
 
 export function renderRoomScene(
@@ -48,13 +60,48 @@ export function renderRoomScene(
     isTimerRunning = false,
     focusStartMs = 0,
     streakFireUntilMs = 0,
+    themeId = 'classic',
+    transition = null,
   } = params;
 
   ctx.imageSmoothingEnabled = false;
 
-  // Layer 1: Background (library_bg.png)
-  const bg = getImage('bg');
-  ctx.drawImage(bg, 0, 0);
+  // Fallback classical images
+  const defaultBg = getImage('bg');
+  const defaultOverlay = getImage('light');
+
+  // Resolve current or transition theme assets
+  const currentTheme = getCachedTheme(themeId, 'night') || getCachedTheme('classic', 'night');
+
+  let isTransitioning = false;
+  let transitionProgress = 1;
+  let fromTheme = currentTheme;
+  let toTheme = currentTheme;
+
+  if (transition) {
+    const elapsed = timeMs - transition.startMs;
+    if (elapsed >= 0 && elapsed < transition.durationMs) {
+      isTransitioning = true;
+      transitionProgress = elapsed / transition.durationMs;
+      fromTheme = getCachedTheme(transition.fromThemeId, 'night') || currentTheme;
+      toTheme = getCachedTheme(transition.toThemeId, 'night') || currentTheme;
+    }
+  }
+
+  // Layer 1: Background (library_bg_{time}.png)
+  if (isTransitioning && fromTheme && toTheme) {
+    drawBayerDitherDissolve(
+      ctx,
+      fromTheme.bgData,
+      toTheme.bgData,
+      fromTheme.bg || defaultBg,
+      toTheme.bg || defaultBg,
+      transitionProgress
+    );
+  } else {
+    const bgImg = currentTheme?.bg || defaultBg;
+    ctx.drawImage(bgImg, 0, 0);
+  }
 
   // Helper: calculate squash scale
   const getSquashScale = (seatId: string): { scaleX: number; scaleY: number } => {
@@ -139,16 +186,31 @@ export function renderRoomScene(
   }
 
   // Layer 4: Chair Backrest Occlusion over every occupied near seat
+  const activeChairImg = isTransitioning && fromTheme && toTheme
+    ? (transitionProgress < 0.5 ? fromTheme.chair : toTheme.chair)
+    : currentTheme?.chair;
+
   for (const seat of layout.seats) {
     if (seat.side !== 'near') continue;
     if (seats[seat.id]) {
-      drawChairNear(ctx, seat.chair.x, seat.chair.y);
+      drawChairNear(ctx, seat.chair.x, seat.chair.y, activeChairImg);
     }
   }
 
   // Layer 5: Lighting Overlay
-  const overlay = getImage('light');
-  ctx.drawImage(overlay, 0, 0);
+  if (isTransitioning && fromTheme && toTheme) {
+    drawBayerDitherDissolve(
+      ctx,
+      fromTheme.lightData,
+      toTheme.lightData,
+      fromTheme.light || defaultOverlay,
+      toTheme.light || defaultOverlay,
+      transitionProgress
+    );
+  } else {
+    const lightImg = currentTheme?.light || defaultOverlay;
+    ctx.drawImage(lightImg, 0, 0);
+  }
 
   // Layer 6: Status Bubbles & Name Tags
   for (const seat of layout.seats) {

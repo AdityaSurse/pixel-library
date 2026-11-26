@@ -1,21 +1,25 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ThemeId, getThemeInfo } from '../../engine/themes';
 
 interface ShareRoomModalProps {
   code: string;
   roomName: string;
+  theme?: ThemeId;
   onClose: () => void;
 }
 
 export const ShareRoomModal: React.FC<ShareRoomModalProps> = ({
   code,
   roomName,
+  theme = 'classic',
   onClose,
 }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const themeInfo = getThemeInfo(theme);
   const roomUrl = `${window.location.origin}/room/${code}`;
 
   const handleCopy = async () => {
@@ -99,6 +103,41 @@ export const ShareRoomModal: React.FC<ShareRoomModalProps> = ({
 
         <div className="px-20" style={{ color: '#5c3a26' }}>
           {roomName}
+        </div>
+
+        {/* Theme Name & Small Preview */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: '#241a2e',
+            border: '2px solid #5c3a26',
+            padding: '6px 12px',
+            boxSizing: 'border-box',
+            maxWidth: '100%',
+          }}
+        >
+          <img
+            src={`/pixel-library-themes/themes/${themeInfo.id}/preview_night@4x.png`}
+            alt={themeInfo.name}
+            style={{
+              width: '48px',
+              height: '28px',
+              objectFit: 'cover',
+              imageRendering: 'pixelated',
+              border: `1px solid ${themeInfo.accent}`,
+              display: 'block',
+            }}
+          />
+          <div style={{ textAlign: 'left' }}>
+            <div className="px-10" style={{ color: '#b9a98a', fontSize: '10px' }}>
+              LIBRARY THEME
+            </div>
+            <div className="px-10" style={{ color: themeInfo.accent, fontWeight: 'bold' }}>
+              {themeInfo.name}
+            </div>
+          </div>
         </div>
 
         {/* Big Room Code in 40px Quietpage */}

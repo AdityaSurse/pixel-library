@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { PixelCanvas, NativePointerCoords } from '../engine/PixelCanvas';
+import { ThemeId, loadTheme, normalizeThemeId, getThemeInfo } from '../engine/themes';
 import {
   initRoomPresence,
   subscribeToRoomData,
@@ -39,6 +40,7 @@ interface RoomData {
   ownerUid: string;
   focusMinutes: number;
   breakMinutes: number;
+  theme?: ThemeId;
 }
 
 export const RoomPage: React.FC = () => {
@@ -70,6 +72,15 @@ export const RoomPage: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // Theme transition state
+  const [themeTransition, setThemeTransition] = useState<{
+    fromThemeId: ThemeId;
+    toThemeId: ThemeId;
+    startMs: number;
+    durationMs: number;
+  } | null>(null);
+  const prevThemeRef = useRef<ThemeId | null>(null);
+
   // Animation & presence refs
   const squashMapRef = useRef<Map<string, number>>(new Map());
   const presenceManagerRef = useRef<RoomPresenceManager | null>(null);
@@ -86,17 +97,39 @@ export const RoomPage: React.FC = () => {
     }, 3500);
   }, []);
 
-  // 1. Fetch Room from Firestore
+  // 1. Real-time Room Snapshot from Firestore
   useEffect(() => {
     if (!cleanCode) return;
-    let active = true;
 
     const roomRef = doc(db, 'rooms', cleanCode);
-    getDoc(roomRef)
-      .then((snap) => {
-        if (!active) return;
+    const unsubRoom = onSnapshot(
+      roomRef,
+      (snap) => {
         if (snap.exists()) {
           const data = snap.data() as RoomData;
+          const currentTheme = normalizeThemeId(data.theme);
+          data.theme = currentTheme;
+
+          // Preload theme assets so transition is instant
+          loadTheme(currentTheme, 'night').catch(() => {});
+
+          if (prevThemeRef.current && prevThemeRef.current !== currentTheme) {
+            // Trigger 300ms 4x4 Bayer dither transition
+            const fromTheme = prevThemeRef.current;
+            setThemeTransition({
+              fromThemeId: fromTheme,
+              toThemeId: currentTheme,
+              startMs: performance.now(),
+              durationMs: 300,
+            });
+            setTimeout(() => {
+              setThemeTransition((cur) =>
+                cur && cur.toThemeId === currentTheme ? null : cur
+              );
+            }, 350);
+          }
+          prevThemeRef.current = currentTheme;
+
           setRoom(data);
           setLoadingRoom(false);
 
@@ -107,6 +140,7 @@ export const RoomPage: React.FC = () => {
               {
                 code: cleanCode,
                 name: data.name || `${cleanCode} Room`,
+                theme: currentTheme,
                 lastVisited: serverTimestamp(),
               },
               { merge: true }
@@ -118,17 +152,16 @@ export const RoomPage: React.FC = () => {
           setRoomNotFound(true);
           setLoadingRoom(false);
         }
-      })
-      .catch((err) => {
-        console.error('Error fetching room:', err);
-        if (active) {
-          setRoomNotFound(true);
-          setLoadingRoom(false);
-        }
-      });
+      },
+      (err) => {
+        console.error('Error listening to room doc:', err);
+        setRoomNotFound(true);
+        setLoadingRoom(false);
+      }
+    );
 
     return () => {
-      active = false;
+      unsubRoom();
     };
   }, [cleanCode, user]);
 
@@ -376,23 +409,26 @@ export const RoomPage: React.FC = () => {
   }, [cleanCode, room, profile, addToast]);
 
   const handleSaveSettings = useCallback(
-    async (newFocus: number, newBreak: number) => {
+    async (newFocus: number, newBreak: number, newTheme: ThemeId) => {
       if (!cleanCode) return;
       try {
         await updateDoc(doc(db, 'rooms', cleanCode), {
           focusMinutes: newFocus,
           breakMinutes: newBreak,
+          theme: newTheme,
         });
         setRoom((prev) =>
-          prev ? { ...prev, focusMinutes: newFocus, breakMinutes: newBreak } : null
+          prev
+            ? { ...prev, focusMinutes: newFocus, breakMinutes: newBreak, theme: newTheme }
+            : null
         );
         // If timer is idle/reset, apply new focus duration immediately
         if (timer?.startedAt == null && timer?.pausedRemainingMs == null) {
           await updateIdleTimerDuration(cleanCode, newFocus);
         }
-        addToast('Room timer settings updated', 'info');
+        addToast('Room settings updated', 'info');
       } catch (err) {
-        console.error('Failed to update timer settings:', err);
+        console.error('Failed to update room settings:', err);
         addToast('Failed to update settings', 'info');
       }
     },
@@ -416,6 +452,8 @@ export const RoomPage: React.FC = () => {
         isTimerRunning: Boolean(timer && timer.startedAt !== null),
         focusStartMs,
         streakFireUntilMs,
+        themeId: room?.theme || 'classic',
+        transition: themeTransition,
       });
     },
     [
@@ -430,6 +468,8 @@ export const RoomPage: React.FC = () => {
       timer,
       focusStartMs,
       streakFireUntilMs,
+      room?.theme,
+      themeTransition,
     ]
   );
 
@@ -515,6 +555,8 @@ export const RoomPage: React.FC = () => {
         breakMinutes={room?.breakMinutes || 5}
         showAllNames={showAllNames}
         isSeated={isCurrentSeated}
+        themeName={getThemeInfo(room?.theme).name}
+        themeAccent={getThemeInfo(room?.theme).accent}
         onToggleNames={() => setShowAllNames((prev) => !prev)}
         onStandUp={handleStandUp}
         onLeave={handleLeave}
@@ -533,13 +575,14 @@ export const RoomPage: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* Timer Settings Modal (Owner editable, non-owner read-only) */}
+      {/* Room Settings Modal (Owner editable, non-owner read-only) */}
       <RoomSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         isOwner={Boolean(user && room && room.ownerUid === user.uid)}
         currentFocusMinutes={room?.focusMinutes || 25}
         currentBreakMinutes={room?.breakMinutes || 5}
+        currentTheme={room?.theme || 'classic'}
         onSave={handleSaveSettings}
       />
 

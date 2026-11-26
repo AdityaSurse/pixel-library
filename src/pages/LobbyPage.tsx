@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   doc,
@@ -14,6 +14,7 @@ import { RoomCodeInput } from '../components/lobby/RoomCodeInput';
 import { ShareRoomModal } from '../components/lobby/ShareRoomModal';
 import { RecentRoomsList } from '../components/lobby/RecentRoomsList';
 import { PixelStepper } from '../components/common/PixelStepper';
+import { ThemeId, getThemeList } from '../engine/themes';
 
 const ALLOWED_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
@@ -40,6 +41,7 @@ export const LobbyPage: React.FC = () => {
   }, [profile?.username]);
 
   const [createName, setCreateName] = useState(defaultRoomName);
+  const [selectedTheme, setSelectedTheme] = useState<ThemeId>('classic');
   const [focusMinutes, setFocusMinutes] = useState<number>(25);
   const [breakMinutes, setBreakMinutes] = useState<number>(5);
   const [isCustomFocus, setIsCustomFocus] = useState<boolean>(false);
@@ -48,7 +50,30 @@ export const LobbyPage: React.FC = () => {
   const [createdRoomInfo, setCreatedRoomInfo] = useState<{
     code: string;
     name: string;
+    theme: ThemeId;
   } | null>(null);
+
+  const themeCardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const themeList = getThemeList();
+
+  const handleThemeKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIdx = (index + 1) % themeList.length;
+      setSelectedTheme(themeList[nextIdx].id);
+      themeCardRefs.current[nextIdx]?.focus();
+      themeCardRefs.current[nextIdx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIdx = (index - 1 + themeList.length) % themeList.length;
+      setSelectedTheme(themeList[prevIdx].id);
+      themeCardRefs.current[prevIdx]?.focus();
+      themeCardRefs.current[prevIdx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setSelectedTheme(themeList[index].id);
+    }
+  };
 
   // Join Room state
   const [joinCode, setJoinCode] = useState('');
@@ -93,17 +118,19 @@ export const LobbyPage: React.FC = () => {
         createdAt: serverTimestamp(),
         focusMinutes,
         breakMinutes,
+        theme: selectedTheme,
       });
 
       // 2. Record recent room visit for current user
       await setDoc(doc(db, 'users', user.uid, 'recentRooms', code), {
         code,
         name: finalName,
+        theme: selectedTheme,
         lastVisited: serverTimestamp(),
       });
 
       // 3. Open share modal
-      setCreatedRoomInfo({ code, name: finalName });
+      setCreatedRoomInfo({ code, name: finalName, theme: selectedTheme });
     } catch (err: unknown) {
       console.error('Failed to create room:', err);
     } finally {
@@ -383,6 +410,104 @@ export const LobbyPage: React.FC = () => {
                     outline: 'none',
                   }}
                 />
+              </div>
+
+              {/* Choose Your Library Picker */}
+              <div>
+                <label
+                  className="px-10"
+                  style={{
+                    color: '#5c3a26',
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  CHOOSE YOUR LIBRARY:
+                </label>
+                <div
+                  role="radiogroup"
+                  aria-label="Choose your library"
+                  style={{
+                    display: 'flex',
+                    gap: '10px',
+                    overflowX: 'auto',
+                    scrollSnapType: 'x mandatory',
+                    padding: '4px 2px 8px 2px',
+                    scrollbarWidth: 'thin',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  {themeList.map((t, idx) => {
+                    const isSelected = selectedTheme === t.id;
+                    return (
+                      <div
+                        key={t.id}
+                        ref={(el) => {
+                          themeCardRefs.current[idx] = el;
+                        }}
+                        role="radio"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onClick={() => setSelectedTheme(t.id)}
+                        onKeyDown={(e) => handleThemeKeyDown(e, idx)}
+                        style={{
+                          flex: '0 0 135px',
+                          scrollSnapAlign: 'start',
+                          backgroundColor: '#241a2e',
+                          border: isSelected ? '3px solid #d9463b' : '3px solid #1b1423',
+                          boxShadow: isSelected
+                            ? '0 0 0 2px #d9463b, inset 0 0 0 1px #d9463b'
+                            : 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          outline: 'none',
+                          userSelect: 'none',
+                          boxSizing: 'border-box',
+                          overflow: 'hidden',
+                          transition: 'border-color 0.1s',
+                        }}
+                      >
+                        <img
+                          src={`/pixel-library-themes/themes/${t.id}/preview_night@4x.png`}
+                          alt={t.name}
+                          style={{
+                            width: '100%',
+                            height: '70px',
+                            objectFit: 'cover',
+                            imageRendering: 'pixelated',
+                            display: 'block',
+                          }}
+                        />
+                        {/* Coloured accent bar from themes.json */}
+                        <div
+                          style={{
+                            height: '4px',
+                            width: '100%',
+                            backgroundColor: t.accent,
+                          }}
+                        />
+                        {/* Theme Name in Quietpage */}
+                        <div
+                          className="px-10"
+                          style={{
+                            padding: '6px 4px',
+                            textAlign: 'center',
+                            color: isSelected ? '#1b1423' : '#f1e3c4',
+                            backgroundColor: isSelected ? '#ffe2a0' : '#1b1423',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            fontSize: '10px',
+                          }}
+                        >
+                          {t.name}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Focus Length Options */}
@@ -681,6 +806,7 @@ export const LobbyPage: React.FC = () => {
         <ShareRoomModal
           code={createdRoomInfo.code}
           roomName={createdRoomInfo.name}
+          theme={createdRoomInfo.theme}
           onClose={() => setCreatedRoomInfo(null)}
         />
       )}

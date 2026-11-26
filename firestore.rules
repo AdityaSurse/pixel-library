@@ -7,6 +7,11 @@ service cloud.firestore {
       return preset in ['aditya', 'meera', 'kabir', 'zoya', 'rohan', 'tara', 'ishaan', 'anya'];
     }
 
+    // Allowed library theme IDs
+    function isValidTheme(theme) {
+      return theme in ['classic', 'vampire', 'renaissance', 'midnight', 'cherry', 'space', 'cafe', 'greathall'];
+    }
+
     // Valid lowercase alphanumeric username (1-16 chars)
     function isValidUsername(name) {
       return name is string && name.size() >= 1 && name.size() <= 16 && name.matches('^[a-z0-9_]+$');
@@ -43,8 +48,12 @@ service cloud.firestore {
       allow create: if request.auth != null 
                     && request.resource.data.ownerUid == request.auth.uid
                     && code.size() == 6
-                    && code.matches('^[A-Z0-9]+$');
-      allow update, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+                    && code.matches('^[A-Z0-9]+$')
+                    && (!('theme' in request.resource.data) || isValidTheme(request.resource.data.theme));
+      allow update: if request.auth != null 
+                    && resource.data.ownerUid == request.auth.uid
+                    && (!('theme' in request.resource.data) || isValidTheme(request.resource.data.theme));
+      allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
     }
   }
 }

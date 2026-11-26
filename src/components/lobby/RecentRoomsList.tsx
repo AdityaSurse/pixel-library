@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { ref, onValue } from 'firebase/database';
 import { db, rtdb } from '../../lib/firebase';
+import { getThemeInfo } from '../../engine/themes';
 
 interface RecentRoom {
   code: string;
   name: string;
+  theme?: string;
   lastVisited?: unknown;
 }
 
@@ -31,6 +33,7 @@ const BookSpineCard: React.FC<{
 }> = ({ room, index, onClick }) => {
   const [presenceCount, setPresenceCount] = useState<number>(0);
   const color = SPINE_COLORS[index % SPINE_COLORS.length];
+  const themeInfo = getThemeInfo(room.theme);
 
   useEffect(() => {
     const presenceRef = ref(rtdb, `rooms/${room.code}/presence`);
@@ -77,24 +80,52 @@ const BookSpineCard: React.FC<{
         boxSizing: 'border-box',
         transition: 'transform 0.1s steps(1)',
         userSelect: 'none',
+        gap: '8px',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', gap: '2px' }}>
-        <div
-          className="px-20"
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+        <img
+          src={`/pixel-library-themes/themes/${themeInfo.id}/preview_night@4x.png`}
+          alt={themeInfo.name}
           style={{
-            color: color.foil,
-            lineHeight: 1.1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            maxWidth: '220px',
+            width: '44px',
+            height: '26px',
+            objectFit: 'cover',
+            imageRendering: 'pixelated',
+            border: `1px solid ${themeInfo.accent}`,
+            display: 'block',
+            flexShrink: 0,
           }}
-        >
-          {room.name || room.code}
-        </div>
-        <div className="px-10" style={{ color: '#b9a98a' }}>
-          Code: {room.code}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', gap: '2px', minWidth: 0 }}>
+          <div
+            className="px-20"
+            style={{
+              color: color.foil,
+              lineHeight: 1.1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '180px',
+            }}
+          >
+            {room.name || room.code}
+          </div>
+          <div
+            className="px-10"
+            style={{
+              color: '#b9a98a',
+              display: 'flex',
+              gap: '6px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <span>{room.code}</span>
+            <span>•</span>
+            <span style={{ color: themeInfo.accent }}>{themeInfo.name}</span>
+          </div>
         </div>
       </div>
 
@@ -106,6 +137,7 @@ const BookSpineCard: React.FC<{
           padding: '4px 8px',
           border: '1px solid #3a2419',
           whiteSpace: 'nowrap',
+          flexShrink: 0,
         }}
       >
         {presenceCount > 0 ? `${presenceCount} reading now` : '0 reading now'}

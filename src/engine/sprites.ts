@@ -78,8 +78,13 @@ export function drawAvatar(
 /**
  * Draws the near-seat chair backrest on top of an occupied near seat.
  */
-export function drawChairNear(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  const chair = getImage('chair');
+export function drawChairNear(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  chairImg?: HTMLImageElement
+): void {
+  const chair = chairImg || getImage('chair');
   ctx.drawImage(chair, Math.round(x), Math.round(y));
 }
 

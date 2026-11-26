@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PixelStepper } from '../common/PixelStepper';
+import { ThemeId, getThemeList, getThemeInfo } from '../../engine/themes';
 
 interface RoomSettingsModalProps {
   isOpen: boolean;
@@ -7,7 +8,12 @@ interface RoomSettingsModalProps {
   isOwner: boolean;
   currentFocusMinutes: number;
   currentBreakMinutes: number;
-  onSave: (newFocusMinutes: number, newBreakMinutes: number) => Promise<void>;
+  currentTheme?: ThemeId;
+  onSave: (
+    newFocusMinutes: number,
+    newBreakMinutes: number,
+    newTheme: ThemeId
+  ) => Promise<void>;
 }
 
 export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
@@ -16,18 +22,24 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   isOwner,
   currentFocusMinutes,
   currentBreakMinutes,
+  currentTheme = 'classic',
   onSave,
 }) => {
   const [focusVal, setFocusVal] = useState(currentFocusMinutes);
   const [breakVal, setBreakVal] = useState(currentBreakMinutes);
+  const [themeVal, setThemeVal] = useState<ThemeId>(currentTheme);
   const [saving, setSaving] = useState(false);
+
+  const themeList = getThemeList();
+  const currentThemeInfo = getThemeInfo(currentTheme);
 
   useEffect(() => {
     if (isOpen) {
       setFocusVal(currentFocusMinutes);
       setBreakVal(currentBreakMinutes);
+      setThemeVal(currentTheme);
     }
-  }, [isOpen, currentFocusMinutes, currentBreakMinutes]);
+  }, [isOpen, currentFocusMinutes, currentBreakMinutes, currentTheme]);
 
   if (!isOpen) return null;
 
@@ -35,7 +47,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
     if (!isOwner || saving) return;
     setSaving(true);
     try {
-      await onSave(focusVal, breakVal);
+      await onSave(focusVal, breakVal, themeVal);
       onClose();
     } finally {
       setSaving(false);
@@ -65,7 +77,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
         className="pixel-panel"
         style={{
           width: '100%',
-          maxWidth: '360px',
+          maxWidth: '440px',
           backgroundColor: '#241a2e',
           border: '4px solid #5c3a26',
           boxShadow: '0 12px 32px rgba(0, 0, 0, 0.9)',
@@ -84,7 +96,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
           }}
         >
           <div className="px-20" style={{ color: '#ffe2a0' }}>
-            TIMER SETTINGS
+            ROOM SETTINGS
           </div>
           <button
             type="button"
@@ -99,6 +111,87 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
         {isOwner ? (
           /* Owner Editable Form */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Library Theme Picker */}
+            <div>
+              <span
+                className="px-10"
+                style={{
+                  color: '#ffe2a0',
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontWeight: 'bold',
+                }}
+              >
+                LIBRARY THEME:
+              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  paddingBottom: '6px',
+                  scrollbarWidth: 'thin',
+                }}
+              >
+                {themeList.map((t) => {
+                  const isSelected = themeVal === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setThemeVal(t.id)}
+                      style={{
+                        flex: '0 0 110px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        backgroundColor: '#1b1423',
+                        border: isSelected ? '3px solid #d9463b' : '2px solid #3a2419',
+                        boxShadow: isSelected ? '0 0 0 2px #d9463b' : 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        overflow: 'hidden',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <img
+                        src={`/pixel-library-themes/themes/${t.id}/preview_night@4x.png`}
+                        alt={t.name}
+                        style={{
+                          width: '100%',
+                          height: '56px',
+                          objectFit: 'cover',
+                          imageRendering: 'pixelated',
+                          display: 'block',
+                        }}
+                      />
+                      <div
+                        style={{
+                          height: '3px',
+                          width: '100%',
+                          backgroundColor: t.accent,
+                        }}
+                      />
+                      <div
+                        className="px-10"
+                        style={{
+                          padding: '4px 2px',
+                          color: isSelected ? '#ffe2a0' : '#b9a98a',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          width: '100%',
+                          fontSize: '10px',
+                        }}
+                      >
+                        {t.name}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Focus Length Stepper */}
             <div>
               <span
@@ -158,7 +251,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                 border: '1px solid #3a2419',
               }}
             >
-              Changes apply immediately if idle, or from the next phase.
+              Theme swaps with a 300ms dissolve. Timer changes apply when idle or from next phase.
             </div>
 
             {/* Actions */}
@@ -196,15 +289,27 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
               }}
             >
               <div className="px-10" style={{ color: '#ffe2a0' }}>
-                Focus length: <strong style={{ color: '#4fa36a' }}>{currentFocusMinutes} min</strong>
+                Library theme:{' '}
+                <strong style={{ color: currentThemeInfo.accent }}>
+                  {currentThemeInfo.name}
+                </strong>
               </div>
               <div className="px-10" style={{ color: '#ffe2a0' }}>
-                Break length: <strong style={{ color: '#e0a84a' }}>{currentBreakMinutes} min</strong>
+                Focus length:{' '}
+                <strong style={{ color: '#4fa36a' }}>
+                  {currentFocusMinutes} min
+                </strong>
+              </div>
+              <div className="px-10" style={{ color: '#ffe2a0' }}>
+                Break length:{' '}
+                <strong style={{ color: '#e0a84a' }}>
+                  {currentBreakMinutes} min
+                </strong>
               </div>
             </div>
 
             <div className="px-10" style={{ color: '#b9a98a', textAlign: 'center' }}>
-              Only the room owner can change timer settings.
+              Only the room owner can change room settings.
             </div>
 
             <button

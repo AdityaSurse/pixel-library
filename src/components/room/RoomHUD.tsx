@@ -7,6 +7,8 @@ interface RoomHUDProps {
   breakMinutes: number;
   showAllNames: boolean;
   isSeated: boolean;
+  themeName?: string;
+  themeAccent?: string;
   onToggleNames: () => void;
   onStandUp: () => void;
   onLeave: () => void;
@@ -19,6 +21,8 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
   breakMinutes,
   showAllNames,
   isSeated,
+  themeName,
+  themeAccent,
   onToggleNames,
   onStandUp,
   onLeave,
@@ -68,10 +72,26 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
         }}
       >
         <div>
-          <div className="px-20" style={{ color: '#ffe2a0' }}>
-            {roomName}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span className="px-20" style={{ color: '#ffe2a0' }}>
+              {roomName}
+            </span>
+            {themeName && (
+              <span
+                className="px-10"
+                style={{
+                  backgroundColor: '#1b1423',
+                  color: themeAccent || '#ffe2a0',
+                  border: '1px solid #5c3a26',
+                  padding: '2px 8px',
+                  borderRadius: '2px',
+                }}
+              >
+                {themeName}
+              </span>
+            )}
           </div>
-          <div className="px-10" style={{ color: '#b9a98a' }}>
+          <div className="px-10" style={{ color: '#b9a98a', marginTop: '2px' }}>
             ROOM: {roomCode} • {focusMinutes}/{breakMinutes}m
           </div>
         </div>
