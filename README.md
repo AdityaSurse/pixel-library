@@ -17,6 +17,8 @@
 <p align="center">
   <a href="#how-it-works">How it works</a> · 
   <a href="#how-to-study-with-friends">Study with friends</a> · 
+  <a href="#the-libraries">Libraries</a> · 
+  <a href="#feature-pack-2-roadmap">Roadmap</a> · 
   <a href="#architecture">Architecture</a> · 
   <a href="#data-model">Data model</a> · 
   <a href="#taking-a-seat">Taking a seat</a> · 
@@ -251,12 +253,252 @@ flowchart LR
     classDef pink fill:#c86b86,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
     classDef wood fill:#7a4d31,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
 
-    P1["Phase 1: README ✅"]:::green --> P2["Phase 2: Setup & engine ✅"]:::green
-    P2 --> P3["Phase 3: Landing sign ✅"]:::green
-    P3 --> P4["Phase 4: Google sign-in & avatar ✅"]:::green
-    P4 --> P5["Phase 5: Lobby ✅"]:::green
-    P5 --> P6["Phase 6: Reading room ✅"]:::green
-    P6 --> P7["Phase 7: Pomodoro & launch ✅"]:::green
+    P1["Phase 1: README (complete)"]:::green --> P2["Phase 2: Setup & engine (complete)"]:::green
+    P2 --> P3["Phase 3: Landing sign (complete)"]:::green
+    P3 --> P4["Phase 4: Google sign-in & avatar (complete)"]:::green
+    P4 --> P5["Phase 5: Lobby (complete)"]:::green
+    P5 --> P6["Phase 6: Reading room (complete)"]:::green
+    P6 --> P7["Phase 7: Pomodoro & launch (complete)"]:::green
+```
+
+---
+
+## The Libraries
+
+Step into eight handcrafted sanctuaries for deep reading, study sessions, and quiet companionship. Every theme features a custom pixel palette, authentic ambient lighting, and dedicated chair furnishings.
+
+<div align="center">
+
+<table align="center" style="border-collapse: collapse; border: none;">
+  <tr>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/classic/preview_night@4x.png" alt="Classic Library" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Classic Library</strong>
+    </td>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/vampire/preview_night@4x.png" alt="Vampire Archive" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Vampire Archive</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/renaissance/preview_night@4x.png" alt="Renaissance Study" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Renaissance Study</strong>
+    </td>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/midnight/preview_night@4x.png" alt="Midnight Dark Mode" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Midnight Dark Mode</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/cherry/preview_night@4x.png" alt="Cherry Blossom Reading Room" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Cherry Blossom Reading Room</strong>
+    </td>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/space/preview_night@4x.png" alt="Space Station Library" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Space Station Library</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/cafe/preview_night@4x.png" alt="Rainy Café Library" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Rainy Café Library</strong>
+    </td>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/greathall/preview_night@4x.png" alt="Great Hall" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+      <br>
+      <strong>Great Hall</strong>
+    </td>
+  </tr>
+</table>
+
+<table align="center" style="border-collapse: collapse; border: none; margin-top: 16px;">
+  <tr>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/classic/preview_day@4x.png" alt="Classic Library Day" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+    </td>
+    <td align="center" style="padding: 12px; border: none;">
+      <img src="public/pixel-library-themes/themes/classic/preview_night@4x.png" alt="Classic Library Night" width="380" style="image-rendering: pixelated; border-radius: 4px; display: block;" />
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" style="border: none;">
+      <strong>Day / Night</strong>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+---
+
+## Feature Pack 2 Roadmap
+
+Feature Pack 2 expands Pixel Library with dynamic environmental themes, atmospheric lighting, goal setting, and progression systems for committed scholars.
+
+```mermaid
+flowchart LR
+    classDef red fill:#d9463b,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef mustard fill:#e0a84a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef green fill:#4fa36a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef blue fill:#4a5fa8,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef purple fill:#7e4a8a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef teal fill:#3f7d6e,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef pink fill:#c86b86,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+
+    F1["Library Themes (planned)"]:::red --> F2["Day and Night (planned)"]:::mustard
+    F2 --> F3["Session Goal Card (planned)"]:::green
+    F3 --> F4["Study Heatmap (planned)"]:::blue
+    F4 --> F5["Unlockables (planned)"]:::purple
+    F5 --> F6["Room Leaderboard (planned)"]:::pink
+```
+
+---
+
+### Library Themes
+*Coming soon*
+
+Room creators can customize their study environment by selecting one of eight illustrated themes during room setup or anytime from room settings. The selected atmosphere synchronizes in real time through Firebase so every reader in the room studies within the exact same cozy visual world.
+
+```mermaid
+flowchart LR
+    classDef red fill:#d9463b,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef mustard fill:#e0a84a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef green fill:#4fa36a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef blue fill:#4a5fa8,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef purple fill:#7e4a8a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+
+    T1["Create room"]:::mustard --> T2["Pick library"]:::blue
+    T2 --> T3["Saved to room"]:::purple
+    T3 --> T4["Everyone sees the same library"]:::green
+```
+
+---
+
+### Day and Night
+*Coming soon*
+
+Dynamic daylight cycles bring natural time awareness to long study blocks with distinct daytime sunlight and nighttime desk-lamp warmth. Readers can let lighting transition automatically based on server time or switch manually between Day and Night in room settings.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    Day: Day (06:00–18:00)
+    Night: Night (18:00–06:00)
+    [*] --> Day
+    Day --> Night: 18:00 sunset
+    Night --> Day: 06:00 sunrise
+```
+
+---
+
+### Session Goal Card
+*Coming soon*
+
+Scholars can write a focused target on an index card pinned directly to their desk before each Pomodoro round begins. When the interval finishes, readers mark the objective as completed or missed, automatically recording the entry into their personal study log.
+
+```mermaid
+flowchart LR
+    classDef red fill:#d9463b,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef mustard fill:#e0a84a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef green fill:#4fa36a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef blue fill:#4a5fa8,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef purple fill:#7e4a8a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+
+    G1["Write goal"]:::mustard --> G2["Note appears on desk"]:::blue
+    G2 --> G3["Focus"]:::red
+    G3 --> G4["Done or Missed"]:::purple
+    G4 --> G5["Saved to history"]:::green
+```
+
+---
+
+### Study Heatmap
+*Coming soon*
+
+A retro GitHub-style activity grid visualizes your daily Pomodoro focus sessions throughout the year. Each cell renders at discrete pixel-grid steps, deepening in intensity as more study intervals are completed each day.
+
+<p align="center">
+  <img src="public/pixel-library-themes/heatmap/heatmap_levels@4x.png" alt="Study Heatmap Activity Levels" width="240" style="image-rendering: pixelated; display: block; margin: 0 auto;" />
+  <br>
+  <sub><strong>Less &rarr; More</strong></sub>
+</p>
+
+---
+
+### Unlockables
+*Coming soon*
+
+Consistently studying in the library earns progress toward new library environments, collectible scholar badges, and expressive avatar accessories. As your Pomodoro counts rise and study streaks continue unbroken, milestones unlock automatically on your library card.
+
+<p align="center">
+  <img src="public/pixel-library-themes/unlockables/accessories_preview@4x.png" alt="Avatar Accessories Preview" width="360" style="image-rendering: pixelated; margin: 8px;" />
+  <img src="public/pixel-library-themes/badges/badges_sheet@4x.png" alt="Scholar Badges" width="280" style="image-rendering: pixelated; margin: 8px;" />
+</p>
+
+<div align="center">
+
+| Category | Item | Unlock Requirement |
+| :--- | :--- | :--- |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Classic Library | Free (Default starter theme) |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Midnight Dark Mode | Free (Default starter theme) |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Cherry Blossom Reading Room | 10 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Rainy Café Library | 25 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Renaissance Study | 50 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Space Station Library | 7-day study streak |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Great Hall | 100 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Vampire Archive | 3,000 minutes focused (50 hours) |
+| <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Flower Crown | 5 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Beanie | 15 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Headphones | 30 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/fire@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Cat Ears | 3-day study streak |
+| <img src="public/pixel-library-assets/icons/fire@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Royal Crown | 14-day study streak |
+| <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Wizard Hat | 75 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Graduation Cap | 150 Pomodoros completed |
+| <img src="public/pixel-library-assets/icons/tomato@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | First Pomodoro | Complete 1 Pomodoro session |
+| <img src="public/pixel-library-assets/icons/tomato@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | Bronze Scholar | Complete 10 Pomodoro sessions |
+| <img src="public/pixel-library-assets/icons/tomato@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | Silver Scholar | Complete 50 Pomodoro sessions |
+| <img src="public/pixel-library-assets/icons/tomato@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | Gold Scholar | Complete 100 Pomodoro sessions |
+| <img src="public/pixel-library-assets/icons/fire@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | 7-Day Dedication | Maintain a 7-day streak |
+| <img src="public/pixel-library-assets/icons/fire@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | 30-Day Master | Maintain a 30-day streak |
+| <img src="public/pixel-library-assets/icons/clock@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | Night Owl | Complete a Pomodoro between 00:00 and 04:00 |
+| <img src="public/pixel-library-assets/icons/clock@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Scholar Badge** | Early Bird | Complete a Pomodoro between 05:00 and 08:00 |
+
+</div>
+
+---
+
+### Room Leaderboard
+*Coming soon*
+
+A vintage chalkboard hung on the reading room wall tallies weekly focus minutes across all scholars in the room. Friendly academic rivalry helps everyone stay in flow, with top three readers honored by pixel rank medallions that reset cleanly every Monday morning.
+
+<p align="center">
+  <img src="public/pixel-library-themes/leaderboard/rank_1@4x.png" alt="Rank 1" width="64" style="image-rendering: pixelated; margin: 0 12px;" />
+  <img src="public/pixel-library-themes/leaderboard/rank_2@4x.png" alt="Rank 2" width="64" style="image-rendering: pixelated; margin: 0 12px;" />
+  <img src="public/pixel-library-themes/leaderboard/rank_3@4x.png" alt="Rank 3" width="64" style="image-rendering: pixelated; margin: 0 12px;" />
+</p>
+
+```mermaid
+flowchart LR
+    classDef red fill:#d9463b,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef mustard fill:#e0a84a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef green fill:#4fa36a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef blue fill:#4a5fa8,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef purple fill:#7e4a8a,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+    classDef teal fill:#3f7d6e,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
+
+    L1["Finish Pomodoro"]:::red --> L2["Weekly minutes added"]:::blue
+    L2 --> L3["Chalkboard ranks update"]:::mustard
+    L3 --> L4["Resets Monday"]:::teal
 ```
 
 ---
