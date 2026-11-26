@@ -1,5 +1,7 @@
 import { getImage } from '../../engine/assets';
 import { drawAvatar, drawChairNear } from '../../engine/sprites';
+import { getCachedTheme } from '../../engine/themes';
+import { resolveEffectiveTimeOfDay } from '../../engine/timeOfDay';
 
 // Fixed window sky coordinates identified from library_bg.png
 const WINDOW_STARS = [
@@ -35,13 +37,21 @@ const DUST_MOTES: DustMote[] = [
   { lampX: 260, lampY: 147, offsetX: 5, height: 26, speed: 0.006, phase: 3200 },
 ];
 
-// Hard 3-step breathing opacity values between 0.85 and 1.0 (never smooth)
-const BREATHING_OPACITIES = [0.85, 0.925, 1.0, 0.925];
+// Hard 4-step breathing opacity values between 0.90 and 1.0 (never smooth)
+const NIGHT_BREATHE_OPACITIES = [0.90, 0.95, 1.0, 0.95];
 
-export function renderLandingScene(ctx: CanvasRenderingContext2D, timeMs: number): void {
+export function renderLandingScene(
+  ctx: CanvasRenderingContext2D,
+  timeMs: number,
+  customTimeOfDay?: 'day' | 'night'
+): void {
   try {
-    const bg = getImage('bg');
-    const light = getImage('light');
+    const timeOfDay = customTimeOfDay || resolveEffectiveTimeOfDay();
+    const classicTheme = getCachedTheme('classic', timeOfDay);
+
+    const bg = classicTheme?.bg || getImage('bg');
+    const light = classicTheme?.light || getImage('light');
+    const chair = classicTheme?.chair || getImage('chair');
 
     // 1. Layer 1: Background
     ctx.drawImage(bg, 0, 0);
@@ -62,24 +72,29 @@ export function renderLandingScene(ctx: CanvasRenderingContext2D, timeMs: number
     drawAvatar(ctx, 5, nearFrame, 238, 91);
 
     // 4. Layer 4: Chair Backrest Occlusion (chair_near.png) over occupied near seat
-    drawChairNear(ctx, 238, 108);
+    drawChairNear(ctx, 238, 108, chair);
 
-    // 5. Layer 5: Lighting Overlay with breathing lamp glow in 3 hard steps
-    const stepIdx = Math.floor(timeMs / 700) % 4;
-    const breatheAlpha = BREATHING_OPACITIES[stepIdx];
-    ctx.globalAlpha = breatheAlpha;
+    // 5. Layer 5: Lighting Overlay (breathing at night between 0.9 and 1.0, steady 1.0 during day)
+    if (timeOfDay === 'night') {
+      const stepIdx = Math.floor(timeMs / 700) % 4;
+      ctx.globalAlpha = NIGHT_BREATHE_OPACITIES[stepIdx];
+    } else {
+      ctx.globalAlpha = 1.0;
+    }
     ctx.drawImage(light, 0, 0);
     ctx.globalAlpha = 1.0;
 
-    // 6. Ambient Life: Twinkle 1-2 random pixels in window skies using palette 'star' (#fff0b0)
-    const starCycle = Math.floor(timeMs / 400);
-    const star1 = WINDOW_STARS[starCycle % WINDOW_STARS.length];
-    const star2 = WINDOW_STARS[(starCycle * 3 + 2) % WINDOW_STARS.length];
+    // 6. Ambient Life: Twinkle 1-2 random pixels in window skies at night using palette 'star' (#fff0b0)
+    if (timeOfDay === 'night') {
+      const starCycle = Math.floor(timeMs / 400);
+      const star1 = WINDOW_STARS[starCycle % WINDOW_STARS.length];
+      const star2 = WINDOW_STARS[(starCycle * 3 + 2) % WINDOW_STARS.length];
 
-    ctx.fillStyle = '#fff0b0'; // palette star
-    ctx.fillRect(star1.x, star1.y, 1, 1);
-    if (starCycle % 2 === 0) {
-      ctx.fillRect(star2.x, star2.y, 1, 1);
+      ctx.fillStyle = '#fff0b0'; // palette star
+      ctx.fillRect(star1.x, star1.y, 1, 1);
+      if (starCycle % 2 === 0) {
+        ctx.fillRect(star2.x, star2.y, 1, 1);
+      }
     }
 
     // 7. Ambient Life: Float 6-8 single-pixel dust motes in palette 'light' (#ffe2a0)

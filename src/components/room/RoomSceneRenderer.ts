@@ -1,6 +1,7 @@
 import { getImage, layout } from '../../engine/assets';
 import {
   ThemeId,
+  ThemeTime,
   getCachedTheme,
   drawBayerDitherDissolve,
 } from '../../engine/themes';
@@ -33,9 +34,16 @@ export interface RoomRenderParams {
   focusStartMs?: number;
   streakFireUntilMs?: number;
   themeId?: ThemeId;
+  timeOfDay?: ThemeTime;
   transition?: {
     fromThemeId: ThemeId;
     toThemeId: ThemeId;
+    startMs: number;
+    durationMs: number;
+  } | null;
+  timeCrossfade?: {
+    fromTime: ThemeTime;
+    toTime: ThemeTime;
     startMs: number;
     durationMs: number;
   } | null;
@@ -61,7 +69,9 @@ export function renderRoomScene(
     focusStartMs = 0,
     streakFireUntilMs = 0,
     themeId = 'classic',
+    timeOfDay = 'night',
     transition = null,
+    timeCrossfade = null,
   } = params;
 
   ctx.imageSmoothingEnabled = false;
@@ -70,8 +80,12 @@ export function renderRoomScene(
   const defaultBg = getImage('bg');
   const defaultOverlay = getImage('light');
 
-  // Resolve current or transition theme assets
-  const currentTheme = getCachedTheme(themeId, 'night') || getCachedTheme('classic', 'night');
+  // Resolve current theme assets according to timeOfDay
+  const currentTheme =
+    getCachedTheme(themeId, timeOfDay) ||
+    getCachedTheme(themeId, 'night') ||
+    getCachedTheme('classic', timeOfDay) ||
+    getCachedTheme('classic', 'night');
 
   let isTransitioning = false;
   let transitionProgress = 1;
@@ -83,8 +97,25 @@ export function renderRoomScene(
     if (elapsed >= 0 && elapsed < transition.durationMs) {
       isTransitioning = true;
       transitionProgress = elapsed / transition.durationMs;
-      fromTheme = getCachedTheme(transition.fromThemeId, 'night') || currentTheme;
-      toTheme = getCachedTheme(transition.toThemeId, 'night') || currentTheme;
+      fromTheme = getCachedTheme(transition.fromThemeId, timeOfDay) || currentTheme;
+      toTheme = getCachedTheme(transition.toThemeId, timeOfDay) || currentTheme;
+    }
+  }
+
+  let isTimeCrossfading = false;
+  let timeCrossfadeAlpha = 1;
+  let fromTimeTheme = currentTheme;
+  let toTimeTheme = currentTheme;
+
+  if (timeCrossfade && !isTransitioning) {
+    const elapsed = timeMs - timeCrossfade.startMs;
+    if (elapsed >= 0 && elapsed < timeCrossfade.durationMs) {
+      isTimeCrossfading = true;
+      // 4 hard steps: 25%, 50%, 75%, 100% (over 2000ms: 500ms per step)
+      const stepIdx = Math.min(3, Math.max(0, Math.floor(elapsed / 500)));
+      timeCrossfadeAlpha = [0.25, 0.50, 0.75, 1.00][stepIdx];
+      fromTimeTheme = getCachedTheme(themeId, timeCrossfade.fromTime) || currentTheme;
+      toTimeTheme = getCachedTheme(themeId, timeCrossfade.toTime) || currentTheme;
     }
   }
 
@@ -98,6 +129,11 @@ export function renderRoomScene(
       toTheme.bg || defaultBg,
       transitionProgress
     );
+  } else if (isTimeCrossfading && fromTimeTheme && toTimeTheme) {
+    ctx.drawImage(fromTimeTheme.bg || defaultBg, 0, 0);
+    ctx.globalAlpha = timeCrossfadeAlpha;
+    ctx.drawImage(toTimeTheme.bg || defaultBg, 0, 0);
+    ctx.globalAlpha = 1.0;
   } else {
     const bgImg = currentTheme?.bg || defaultBg;
     ctx.drawImage(bgImg, 0, 0);
@@ -197,6 +233,10 @@ export function renderRoomScene(
     }
   }
 
+  // Night lamp glow breathing in 4 hard steps between 0.9 and 1.0 (never smooth)
+  const NIGHT_BREATHE_OPACITIES = [0.90, 0.95, 1.00, 0.95];
+  const nightBreatheAlpha = NIGHT_BREATHE_OPACITIES[Math.floor(timeMs / 700) % 4];
+
   // Layer 5: Lighting Overlay
   if (isTransitioning && fromTheme && toTheme) {
     drawBayerDitherDissolve(
@@ -207,9 +247,23 @@ export function renderRoomScene(
       toTheme.light || defaultOverlay,
       transitionProgress
     );
+  } else if (isTimeCrossfading && fromTimeTheme && toTimeTheme && timeCrossfade) {
+    // 2-second 4-hard-step day/night crossfade
+    const fromLightAlpha = timeCrossfade.fromTime === 'night' ? nightBreatheAlpha : 1.0;
+    const toLightAlpha = timeCrossfade.toTime === 'night' ? nightBreatheAlpha : 1.0;
+
+    ctx.globalAlpha = fromLightAlpha * (1 - timeCrossfadeAlpha * 0.5);
+    ctx.drawImage(fromTimeTheme.light || defaultOverlay, 0, 0);
+
+    ctx.globalAlpha = timeCrossfadeAlpha * toLightAlpha;
+    ctx.drawImage(toTimeTheme.light || defaultOverlay, 0, 0);
+    ctx.globalAlpha = 1.0;
   } else {
     const lightImg = currentTheme?.light || defaultOverlay;
+    // During night make the lamp glow breathe; during day keep it steady
+    ctx.globalAlpha = timeOfDay === 'night' ? nightBreatheAlpha : 1.0;
     ctx.drawImage(lightImg, 0, 0);
+    ctx.globalAlpha = 1.0;
   }
 
   // Layer 6: Status Bubbles & Name Tags

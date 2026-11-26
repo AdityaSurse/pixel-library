@@ -4,7 +4,8 @@ import { doc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/fi
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { PixelCanvas, NativePointerCoords } from '../engine/PixelCanvas';
-import { ThemeId, loadTheme, normalizeThemeId, getThemeInfo } from '../engine/themes';
+import { ThemeId, preloadTheme, normalizeThemeId, getThemeInfo } from '../engine/themes';
+import { TimeOfDay, useTimeOfDay } from '../engine/timeOfDay';
 import {
   initRoomPresence,
   subscribeToRoomData,
@@ -72,7 +73,17 @@ export const RoomPage: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Theme transition state
+  // Time of Day (Auto / Day / Night) and 2-second crossfade
+  const { timeOfDay, preference: timePreference, setPreference: setTimePreference } = useTimeOfDay();
+  const [timeCrossfade, setTimeCrossfade] = useState<{
+    fromTime: TimeOfDay;
+    toTime: TimeOfDay;
+    startMs: number;
+    durationMs: number;
+  } | null>(null);
+  const prevTimeOfDayRef = useRef<TimeOfDay | null>(null);
+
+  // Theme transition state (4x4 Bayer dither)
   const [themeTransition, setThemeTransition] = useState<{
     fromThemeId: ThemeId;
     toThemeId: ThemeId;
@@ -87,6 +98,23 @@ export const RoomPage: React.FC = () => {
   const prevPresenceRef = useRef<RoomPresenceMap | null>(null);
   const prevTimerRef = useRef<RoomTimerData | null>(null);
   const isAdvancingRef = useRef(false);
+
+  // Detect Day / Night transition (crosses 06:00 / 18:00 or user toggles)
+  useEffect(() => {
+    if (prevTimeOfDayRef.current && prevTimeOfDayRef.current !== timeOfDay) {
+      // 2-second crossfade in 4 hard steps (25/50/75/100%)
+      setTimeCrossfade({
+        fromTime: prevTimeOfDayRef.current,
+        toTime: timeOfDay,
+        startMs: performance.now(),
+        durationMs: 2000,
+      });
+      setTimeout(() => {
+        setTimeCrossfade((cur) => (cur && cur.toTime === timeOfDay ? null : cur));
+      }, 2050);
+    }
+    prevTimeOfDayRef.current = timeOfDay;
+  }, [timeOfDay]);
 
   // Add toast helper
   const addToast = useCallback((text: string, icon?: 'door' | 'info') => {
@@ -110,8 +138,8 @@ export const RoomPage: React.FC = () => {
           const currentTheme = normalizeThemeId(data.theme);
           data.theme = currentTheme;
 
-          // Preload theme assets so transition is instant
-          loadTheme(currentTheme, 'night').catch(() => {});
+          // Preload both day and night theme assets so transitions never flicker
+          preloadTheme(currentTheme).catch(() => {});
 
           if (prevThemeRef.current && prevThemeRef.current !== currentTheme) {
             // Trigger 300ms 4x4 Bayer dither transition
@@ -453,7 +481,9 @@ export const RoomPage: React.FC = () => {
         focusStartMs,
         streakFireUntilMs,
         themeId: room?.theme || 'classic',
+        timeOfDay,
         transition: themeTransition,
+        timeCrossfade,
       });
     },
     [
@@ -469,7 +499,9 @@ export const RoomPage: React.FC = () => {
       focusStartMs,
       streakFireUntilMs,
       room?.theme,
+      timeOfDay,
       themeTransition,
+      timeCrossfade,
     ]
   );
 
@@ -557,6 +589,8 @@ export const RoomPage: React.FC = () => {
         isSeated={isCurrentSeated}
         themeName={getThemeInfo(room?.theme).name}
         themeAccent={getThemeInfo(room?.theme).accent}
+        timePreference={timePreference}
+        onTimePreferenceChange={setTimePreference}
         onToggleNames={() => setShowAllNames((prev) => !prev)}
         onStandUp={handleStandUp}
         onLeave={handleLeave}

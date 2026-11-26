@@ -78,9 +78,10 @@ export async function fetchThemesConfig(): Promise<ThemeInfo[]> {
   return themesConfigPromise;
 }
 
-// Start fetching themes.json immediately in background
+// Start fetching themes.json and preloading classic day & night immediately in background
 if (typeof window !== 'undefined') {
   fetchThemesConfig().catch(() => {});
+  preloadTheme('classic').catch(() => {});
 }
 
 export function getThemeList(): ThemeInfo[] {
@@ -186,6 +187,13 @@ export async function loadTheme(
       }
 
       loadedThemesCache.set(cacheKey, loaded);
+
+      // Preload the alternate time of day in background so day/night switch never flickers
+      const altTime: ThemeTime = time === 'day' ? 'night' : 'day';
+      if (!loadedThemesCache.has(`${safeId}_${altTime}`)) {
+        loadTheme(safeId, altTime).catch(() => {});
+      }
+
       return loaded;
     } catch (err) {
       console.error(`Error loading theme "${safeId}", falling back to classic:`, err);
@@ -212,6 +220,17 @@ export function getCachedTheme(
 ): LoadedTheme | null {
   const safeId: ThemeId = normalizeThemeId(id);
   return loadedThemesCache.get(`${safeId}_${time}`) || null;
+}
+
+/**
+ * Preloads both day and night assets for a theme so day/night switches never flicker.
+ */
+export async function preloadTheme(id: string = 'classic'): Promise<void> {
+  const safeId: ThemeId = normalizeThemeId(id);
+  await Promise.all([
+    loadTheme(safeId, 'day'),
+    loadTheme(safeId, 'night'),
+  ]);
 }
 
 // ---------------------------------------------------------------------------
