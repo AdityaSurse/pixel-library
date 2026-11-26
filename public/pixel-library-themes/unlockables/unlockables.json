@@ -10,39 +10,27 @@
   },
   {
    "id": "cherry",
-   "unlock": {
-    "pomodoros": 10
-   }
+   "unlock": "free"
   },
   {
    "id": "cafe",
-   "unlock": {
-    "pomodoros": 25
-   }
+   "unlock": "free"
   },
   {
    "id": "renaissance",
-   "unlock": {
-    "pomodoros": 50
-   }
+   "unlock": "free"
   },
   {
    "id": "space",
-   "unlock": {
-    "streakDays": 7
-   }
+   "unlock": "free"
   },
   {
    "id": "greathall",
-   "unlock": {
-    "pomodoros": 100
-   }
+   "unlock": "free"
   },
   {
    "id": "vampire",
-   "unlock": {
-    "minutesFocused": 3000
-   }
+   "unlock": "free"
   }
  ],
  "accessories": [

@@ -66,20 +66,7 @@ export const UnlockCelebrationModal: React.FC<UnlockCelebrationModalProps> = ({
               justifyContent: 'center',
             }}
           >
-            {item.type === 'theme' ? (
-              <img
-                src={item.spriteSrc}
-                alt={item.name}
-                style={{
-                  width: '144px',
-                  height: '84px',
-                  objectFit: 'cover',
-                  imageRendering: 'pixelated',
-                  border: '2px solid #5c3a26',
-                  backgroundColor: '#1b1423',
-                }}
-              />
-            ) : item.type === 'badge' ? (
+            {item.type === 'badge' ? (
               <img
                 src={item.spriteSrc}
                 alt={item.name}

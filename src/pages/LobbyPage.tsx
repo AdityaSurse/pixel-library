@@ -20,7 +20,6 @@ import { StudyMapCard } from '../components/heatmap/StudyMapCard';
 import { BadgesShelf } from '../components/badges/BadgesShelf';
 import {
   getAccessoryRow,
-  getThemeUnlockProgress,
   checkForNewUnlocks,
   markUnlocksAsSeen,
   evaluateAllUnlocks,
@@ -114,34 +113,19 @@ export const LobbyPage: React.FC = () => {
   const handleThemeKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
-      for (let step = 1; step < themeList.length; step++) {
-        const nextIdx = (index + step) % themeList.length;
-        const prog = getThemeUnlockProgress(themeList[nextIdx].id, profile?.stats);
-        if (prog.isUnlocked) {
-          setSelectedTheme(themeList[nextIdx].id);
-          themeCardRefs.current[nextIdx]?.focus();
-          themeCardRefs.current[nextIdx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-          break;
-        }
-      }
+      const nextIdx = (index + 1) % themeList.length;
+      setSelectedTheme(themeList[nextIdx].id);
+      themeCardRefs.current[nextIdx]?.focus();
+      themeCardRefs.current[nextIdx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
-      for (let step = 1; step < themeList.length; step++) {
-        const prevIdx = (index - step + themeList.length) % themeList.length;
-        const prog = getThemeUnlockProgress(themeList[prevIdx].id, profile?.stats);
-        if (prog.isUnlocked) {
-          setSelectedTheme(themeList[prevIdx].id);
-          themeCardRefs.current[prevIdx]?.focus();
-          themeCardRefs.current[prevIdx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-          break;
-        }
-      }
+      const prevIdx = (index - 1 + themeList.length) % themeList.length;
+      setSelectedTheme(themeList[prevIdx].id);
+      themeCardRefs.current[prevIdx]?.focus();
+      themeCardRefs.current[prevIdx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      const prog = getThemeUnlockProgress(themeList[index].id, profile?.stats);
-      if (prog.isUnlocked) {
-        setSelectedTheme(themeList[index].id);
-      }
+      setSelectedTheme(themeList[index].id);
     }
   };
 
@@ -559,8 +543,6 @@ export const LobbyPage: React.FC = () => {
                 >
                   {themeList.map((t, idx) => {
                     const isSelected = selectedTheme === t.id;
-                    const progress = getThemeUnlockProgress(t.id, profile?.stats);
-                    const isLocked = !progress.isUnlocked;
 
                     return (
                       <div
@@ -570,13 +552,8 @@ export const LobbyPage: React.FC = () => {
                         }}
                         role="radio"
                         aria-checked={isSelected}
-                        aria-disabled={isLocked}
-                        tabIndex={isLocked ? -1 : 0}
-                        onClick={() => {
-                          if (!isLocked) {
-                            setSelectedTheme(t.id);
-                          }
-                        }}
+                        tabIndex={0}
+                        onClick={() => setSelectedTheme(t.id)}
                         onKeyDown={(e) => handleThemeKeyDown(e, idx)}
                         style={{
                           flex: '0 0 135px',
@@ -586,68 +563,40 @@ export const LobbyPage: React.FC = () => {
                           boxShadow: isSelected
                             ? '0 0 0 2px #d9463b, inset 0 0 0 1px #d9463b'
                             : 'none',
-                          cursor: isLocked ? 'not-allowed' : 'pointer',
+                          cursor: 'pointer',
                           display: 'flex',
                           flexDirection: 'column',
                           outline: 'none',
                           userSelect: 'none',
                           boxSizing: 'border-box',
                           overflow: 'hidden',
-                          position: 'relative',
                           transition: 'border-color 0.1s',
                         }}
                       >
-                        <div style={{ position: 'relative', width: '100%', height: '70px', overflow: 'hidden' }}>
-                          <img
-                            src={`/pixel-library-themes/themes/${t.id}/preview_night@4x.png`}
-                            alt={t.name}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              imageRendering: 'pixelated',
-                              display: 'block',
-                              filter: isLocked ? 'brightness(0.4)' : 'none',
-                            }}
-                          />
-                          {isLocked && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                top: '4px',
-                                right: '4px',
-                                width: '18px',
-                                height: '18px',
-                                backgroundColor: 'rgba(27, 20, 35, 0.85)',
-                                border: '1px solid #d9463b',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <img
-                                src="/pixel-library-themes/badges/lock.png"
-                                alt="Locked"
-                                width="12"
-                                height="14"
-                                style={{ imageRendering: 'pixelated' }}
-                              />
-                            </div>
-                          )}
-                        </div>
+                        <img
+                          src={`/pixel-library-themes/themes/${t.id}/preview_night@4x.png`}
+                          alt={t.name}
+                          style={{
+                            width: '100%',
+                            height: '70px',
+                            objectFit: 'cover',
+                            imageRendering: 'pixelated',
+                            display: 'block',
+                          }}
+                        />
                         {/* Coloured accent bar from themes.json */}
                         <div
                           style={{
                             height: '4px',
                             width: '100%',
-                            backgroundColor: isLocked ? '#5c3a26' : t.accent,
+                            backgroundColor: t.accent,
                           }}
                         />
                         {/* Theme Name in Quietpage */}
                         <div
                           className="px-10"
                           style={{
-                            padding: '4px 4px',
+                            padding: '6px 4px',
                             textAlign: 'center',
                             color: isSelected ? '#1b1423' : '#f1e3c4',
                             backgroundColor: isSelected ? '#ffe2a0' : '#1b1423',
@@ -659,75 +608,6 @@ export const LobbyPage: React.FC = () => {
                         >
                           {t.name}
                         </div>
-                        {/* If locked, requirement label + mini progress bar */}
-                        {isLocked && (
-                          <div
-                            style={{
-                              padding: '3px 4px 5px 4px',
-                              backgroundColor: '#150f1c',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              gap: '2px',
-                            }}
-                          >
-                            <span
-                              className="px-10"
-                              style={{
-                                color: '#b9a98a',
-                                fontSize: '8px',
-                                textAlign: 'center',
-                                lineHeight: '10px',
-                              }}
-                            >
-                              {progress.label}
-                            </span>
-                            <div
-                              style={{
-                                position: 'relative',
-                                width: '64px',
-                                height: '8px',
-                                imageRendering: 'pixelated',
-                                overflow: 'hidden',
-                                border: '1px solid #3a2419',
-                                backgroundColor: '#1b1423',
-                              }}
-                            >
-                              <img
-                                src="/pixel-library-assets/ui/progress_empty.png"
-                                alt=""
-                                style={{
-                                  position: 'absolute',
-                                  top: 0,
-                                  left: 0,
-                                  width: '64px',
-                                  height: '8px',
-                                  imageRendering: 'pixelated',
-                                }}
-                              />
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  top: 0,
-                                  left: 0,
-                                  width: `${Math.round((progress.percent / 100) * 64)}px`,
-                                  height: '8px',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                <img
-                                  src="/pixel-library-assets/ui/progress_full.png"
-                                  alt=""
-                                  style={{
-                                    width: '64px',
-                                    height: '8px',
-                                    imageRendering: 'pixelated',
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}

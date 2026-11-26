@@ -447,7 +447,7 @@ flowchart LR
 
 ### Unlockables
 
-Consistently studying in the library earns progress toward new library environments, collectible scholar badges, and expressive avatar accessories. As your Pomodoro counts rise and study streaks continue unbroken, milestones unlock automatically on your library card.
+Consistently studying in the library earns progress toward collectible scholar badges and expressive avatar accessories. As your Pomodoro counts rise and study streaks continue unbroken, milestones unlock automatically on your library card. All 8 libraries are free for everyone.
 
 ```mermaid
 flowchart LR
@@ -459,7 +459,7 @@ flowchart LR
     classDef pink fill:#c86b86,stroke:#1b1423,stroke-width:3px,color:#f4ecd8;
 
     U1["Complete Pomodoro sessions"]:::red --> U2["Check unlock milestones"]:::blue
-    U2 --> U3["Unlock themes, accessories, badges"]:::purple
+    U2 --> U3["Unlock accessories and badges"]:::purple
     U3 --> U4["Pixel confetti celebration"]:::pink
     U4 --> U5["Equip on library card"]:::green
 ```
@@ -473,14 +473,6 @@ flowchart LR
 
 | Category | Item | Unlock Requirement |
 | :--- | :--- | :--- |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Classic Library | Free (Default starter theme) |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Midnight Dark Mode | Free (Default starter theme) |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Cherry Blossom Reading Room | 10 Pomodoros completed |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Rainy Café Library | 25 Pomodoros completed |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Renaissance Study | 50 Pomodoros completed |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Space Station Library | 7-day study streak |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Great Hall | 100 Pomodoros completed |
-| <img src="public/pixel-library-assets/icons/book@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Library Theme** | Vampire Archive | 3,000 minutes focused (50 hours) |
 | <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Flower Crown | 5 Pomodoros completed |
 | <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Beanie | 15 Pomodoros completed |
 | <img src="public/pixel-library-assets/icons/user@4x.png" width="16" style="image-rendering: pixelated; vertical-align: middle;"> **Avatar Accessory** | Headphones | 30 Pomodoros completed |

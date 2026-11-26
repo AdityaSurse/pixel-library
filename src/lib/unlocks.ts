@@ -35,25 +35,13 @@ export function getAccessoryRow(id: string): number {
   return item ? item.row : -1;
 }
 
-export interface ThemeUnlockDef {
-  id: ThemeId;
-  name: string;
-  pomodoros?: number;
-  streakDays?: number;
-  minutesFocused?: number;
-  isFree?: boolean;
+export function isThemeUnlocked(_themeId?: ThemeId, _stats?: UserStats): boolean {
+  return true;
 }
 
-export const THEME_UNLOCKS: ThemeUnlockDef[] = [
-  { id: 'classic', name: 'Classic Library', isFree: true },
-  { id: 'midnight', name: 'Midnight Dark Mode', isFree: true },
-  { id: 'cherry', name: 'Cherry Blossom Room', pomodoros: 10 },
-  { id: 'cafe', name: 'Rainy Cafe Library', pomodoros: 25 },
-  { id: 'renaissance', name: 'Renaissance Study', pomodoros: 50 },
-  { id: 'space', name: 'Space Station Library', streakDays: 7 },
-  { id: 'greathall', name: 'Great Hall', pomodoros: 100 },
-  { id: 'vampire', name: 'Vampire Archive', minutesFocused: 3000 },
-];
+export function getThemeUnlockProgress(_themeId?: ThemeId, _stats?: UserStats): UnlockProgress {
+  return { label: 'Unlocked', current: 1, target: 1, percent: 100, isUnlocked: true };
+}
 
 export interface BadgeDef {
   id: string;
@@ -82,56 +70,6 @@ export interface UnlockProgress {
   target: number;
   percent: number;
   isUnlocked: boolean;
-}
-
-export function getThemeUnlockProgress(themeId: ThemeId, stats?: UserStats): UnlockProgress {
-  const def = THEME_UNLOCKS.find((t) => t.id === themeId);
-  if (!def || def.isFree) {
-    return { label: 'Unlocked', current: 1, target: 1, percent: 100, isUnlocked: true };
-  }
-
-  const p = stats?.pomodoros || 0;
-  const s = stats?.streakDays || 0;
-  const m = stats?.minutesFocused || 0;
-
-  if (def.pomodoros) {
-    const cur = Math.min(def.pomodoros, p);
-    return {
-      label: `Study ${def.pomodoros} Pomodoros (${cur}/${def.pomodoros})`,
-      current: cur,
-      target: def.pomodoros,
-      percent: Math.min(100, Math.floor((cur / def.pomodoros) * 100)),
-      isUnlocked: p >= def.pomodoros,
-    };
-  }
-
-  if (def.streakDays) {
-    const cur = Math.min(def.streakDays, s);
-    return {
-      label: `Achieve a ${def.streakDays}-day streak (${cur}/${def.streakDays})`,
-      current: cur,
-      target: def.streakDays,
-      percent: Math.min(100, Math.floor((cur / def.streakDays) * 100)),
-      isUnlocked: s >= def.streakDays,
-    };
-  }
-
-  if (def.minutesFocused) {
-    const cur = Math.min(def.minutesFocused, m);
-    return {
-      label: `Focus for ${def.minutesFocused} minutes (${cur}/${def.minutesFocused})`,
-      current: cur,
-      target: def.minutesFocused,
-      percent: Math.min(100, Math.floor((cur / def.minutesFocused) * 100)),
-      isUnlocked: m >= def.minutesFocused,
-    };
-  }
-
-  return { label: 'Locked', current: 0, target: 1, percent: 0, isUnlocked: false };
-}
-
-export function isThemeUnlocked(themeId: ThemeId, stats?: UserStats): boolean {
-  return getThemeUnlockProgress(themeId, stats).isUnlocked;
 }
 
 export function getAccessoryUnlockProgress(id: string, stats?: UserStats): UnlockProgress {
@@ -198,33 +136,18 @@ export function isBadgeEarned(
 export function evaluateAllUnlocks(
   stats?: UserStats,
   userBadges?: Record<string, boolean | string>
-): { themes: string[]; accessories: string[]; badges: string[] } {
-  const themes = THEME_UNLOCKS.filter((t) => isThemeUnlocked(t.id, stats)).map((t) => t.id);
+): { accessories: string[]; badges: string[] } {
   const accessories = ACCESSORIES.filter((a) => isAccessoryUnlocked(a.id, stats)).map((a) => a.id);
   const badges = BADGES.filter((b) => isBadgeEarned(b.id, stats, userBadges)).map((b) => b.id);
 
-  return { themes, accessories, badges };
+  return { accessories, badges };
 }
 
 /**
  * Finds next closest locked item to show as goal in celebration modal.
  */
 export function findNextGoal(stats?: UserStats): string {
-  // 1. Check locked themes
-  const lockedTheme = THEME_UNLOCKS.find((t) => !isThemeUnlocked(t.id, stats));
-  if (lockedTheme) {
-    if (lockedTheme.pomodoros) {
-      return `Next: ${lockedTheme.name} at ${lockedTheme.pomodoros} Pomodoros`;
-    }
-    if (lockedTheme.streakDays) {
-      return `Next: ${lockedTheme.name} at ${lockedTheme.streakDays}-Day Streak`;
-    }
-    if (lockedTheme.minutesFocused) {
-      return `Next: ${lockedTheme.name} at ${lockedTheme.minutesFocused} Minutes Focused`;
-    }
-  }
-
-  // 2. Check locked accessories
+  // 1. Check locked accessories
   const lockedAcc = ACCESSORIES.find((a) => !isAccessoryUnlocked(a.id, stats));
   if (lockedAcc) {
     if (lockedAcc.pomodoros) {
@@ -235,7 +158,7 @@ export function findNextGoal(stats?: UserStats): string {
     }
   }
 
-  // 3. Check locked badges
+  // 2. Check locked badges
   const lockedBadge = BADGES.find((b) => !isBadgeEarned(b.id, stats));
   if (lockedBadge) {
     return `Next: ${lockedBadge.name} (${lockedBadge.description})`;
@@ -245,7 +168,7 @@ export function findNextGoal(stats?: UserStats): string {
 }
 
 export interface UnlockCelebrationItem {
-  type: 'theme' | 'accessory' | 'badge';
+  type: 'accessory' | 'badge';
   id: string;
   name: string;
   title: string;
@@ -259,27 +182,11 @@ export interface UnlockCelebrationItem {
 export function checkForNewUnlocks(profile: UserProfile): UnlockCelebrationItem[] {
   const all = evaluateAllUnlocks(profile.stats, profile.badges);
 
-  const seenThemes = new Set(profile.unlocked?.themes || ['classic', 'midnight']);
   const seenAccessories = new Set(profile.unlocked?.accessories || []);
   const seenBadges = new Set(profile.unlocked?.badges || []);
 
   const newItems: UnlockCelebrationItem[] = [];
   const next = findNextGoal(profile.stats);
-
-  // Check themes
-  for (const tid of all.themes) {
-    if (!seenThemes.has(tid)) {
-      const def = THEME_UNLOCKS.find((t) => t.id === tid);
-      newItems.push({
-        type: 'theme',
-        id: tid,
-        name: def?.name || tid,
-        title: `Unlocked: ${def?.name || tid}!`,
-        spriteSrc: `/pixel-library-themes/themes/${tid}/preview_night@4x.png`,
-        nextGoal: next,
-      });
-    }
-  }
 
   // Check accessories
   for (const aid of all.accessories) {
@@ -319,11 +226,10 @@ export function checkForNewUnlocks(profile: UserProfile): UnlockCelebrationItem[
  */
 export async function markUnlocksAsSeen(
   uid: string,
-  currentUnlocked: { themes: string[]; accessories: string[]; badges: string[] }
+  currentUnlocked: { accessories: string[]; badges: string[] }
 ): Promise<void> {
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, {
-    'unlocked.themes': Array.from(new Set(['classic', 'midnight', ...currentUnlocked.themes])),
     'unlocked.accessories': Array.from(new Set(currentUnlocked.accessories)),
     'unlocked.badges': Array.from(new Set(currentUnlocked.badges)),
   });
