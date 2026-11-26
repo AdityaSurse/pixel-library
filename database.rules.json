@@ -21,7 +21,7 @@
         "timer": {
           ".read": "auth != null",
           ".write": "auth != null",
-          ".validate": "newData.hasChildren(['mode', 'durationMs', 'round']) && (newData.child('mode').val() == 'focus' || newData.child('mode').val() == 'break') && (newData.child('durationMs').val() >= 1 && newData.child('durationMs').val() <= 3600000) && (newData.child('round').isNumber() && newData.child('round').val() >= 1)"
+          ".validate": "newData.hasChildren(['mode', 'durationMs', 'round']) && (newData.child('mode').val() == 'focus' || newData.child('mode').val() == 'break') && (newData.child('round').isNumber() && newData.child('round').val() >= 1) && (!newData.child('startedAt').exists() || newData.child('startedAt').val() == null || newData.child('startedAt').isNumber()) && (!newData.child('pausedRemainingMs').exists() || newData.child('pausedRemainingMs').val() == null || newData.child('pausedRemainingMs').isNumber()) && (newData.child('durationMs').isNumber() && newData.child('durationMs').val() >= 0 && newData.child('durationMs').val() <= 7200000)"
         }
       }
     }

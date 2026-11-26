@@ -1,6 +1,5 @@
 import {
   ref,
-  set,
   onValue,
   runTransaction,
   serverTimestamp,
@@ -15,6 +14,8 @@ export interface RoomTimerData {
   round: number;
   updatedBy: string;
 }
+
+export type TimerUIState = 'running' | 'paused' | 'idle';
 
 // Global server time offset cache
 let cachedServerOffset = 0;
@@ -34,19 +35,39 @@ export function getServerTimeOffset(): number {
 }
 
 /**
+ * Derives the UI timer state strictly from data:
+ * - running = startedAt != null
+ * - paused = startedAt == null && pausedRemainingMs != null
+ * - idle = startedAt == null && pausedRemainingMs == null
+ */
+export function getTimerUIState(timer: RoomTimerData | null): TimerUIState {
+  if (!timer) return 'idle';
+  if (timer.startedAt != null) return 'running';
+  if (timer.pausedRemainingMs != null) return 'paused';
+  return 'idle';
+}
+
+/**
  * Computes exact remaining milliseconds using RTDB server time offset.
  * NEVER count down locally; always derive from startedAt + durationMs - serverNow.
  */
 export function computeRemainingMs(timer: RoomTimerData | null): number {
   if (!timer) return 0;
 
-  if (timer.startedAt !== null) {
+  // Running: startedAt != null
+  if (timer.startedAt != null) {
     const serverNow = Date.now() + cachedServerOffset;
-    const elapsed = serverNow - timer.startedAt;
+    const elapsed = Math.max(0, serverNow - timer.startedAt);
     return Math.max(0, timer.durationMs - elapsed);
   }
 
-  return timer.pausedRemainingMs !== null ? timer.pausedRemainingMs : timer.durationMs;
+  // Paused: frozen remaining time
+  if (timer.pausedRemainingMs != null) {
+    return Math.max(0, timer.pausedRemainingMs);
+  }
+
+  // Idle: full duration
+  return timer.durationMs;
 }
 
 export function subscribeToRoomTimer(
@@ -67,98 +88,156 @@ export function subscribeToRoomTimer(
   return unsub;
 }
 
+/**
+ * START (idle): startedAt = serverTimestamp, durationMs = full length, pausedRemainingMs = null.
+ */
 export async function startTimer(
   code: string,
   focusMinutes: number,
   username: string
 ): Promise<void> {
   const timerRef = ref(rtdb, `rooms/${code}/timer`);
-  const payload: RoomTimerData = {
-    mode: 'focus',
-    durationMs: focusMinutes * 60 * 1000,
-    startedAt: serverTimestamp() as unknown as number,
-    pausedRemainingMs: null,
-    round: 1,
-    updatedBy: username,
-  };
-  await set(timerRef, payload);
+  await runTransaction(timerRef, (current: RoomTimerData | null) => {
+    // If already running, do nothing
+    if (current && current.startedAt != null) {
+      return current;
+    }
+    const fullDurationMs = focusMinutes * 60 * 1000;
+    return {
+      mode: 'focus',
+      durationMs: fullDurationMs,
+      startedAt: serverTimestamp(),
+      pausedRemainingMs: null,
+      round: current?.round || 1,
+      updatedBy: username,
+    };
+  });
 }
 
+/**
+ * PAUSE (running): pausedRemainingMs = current remaining ms (computed with .info/serverTimeOffset), startedAt = null.
+ */
 export async function pauseTimer(
   code: string,
-  currentTimer: RoomTimerData,
-  remainingMs: number,
   username: string
 ): Promise<void> {
   const timerRef = ref(rtdb, `rooms/${code}/timer`);
-  const payload: RoomTimerData = {
-    ...currentTimer,
-    startedAt: null,
-    pausedRemainingMs: Math.max(0, remainingMs),
-    updatedBy: username,
-  };
-  await set(timerRef, payload);
+  await runTransaction(timerRef, (current: RoomTimerData | null) => {
+    // Only pause if currently running
+    if (!current || current.startedAt == null) {
+      return current;
+    }
+    const serverNow = Date.now() + cachedServerOffset;
+    const elapsed = Math.max(0, serverNow - current.startedAt);
+    const remainingMs = Math.max(0, current.durationMs - elapsed);
+
+    return {
+      ...current,
+      startedAt: null,
+      pausedRemainingMs: remainingMs,
+      updatedBy: username,
+    };
+  });
 }
 
+/**
+ * RESUME (paused): startedAt = serverTimestamp, durationMs = pausedRemainingMs, pausedRemainingMs = null.
+ */
 export async function resumeTimer(
   code: string,
-  currentTimer: RoomTimerData,
   username: string
 ): Promise<void> {
   const timerRef = ref(rtdb, `rooms/${code}/timer`);
-  const durationMs = currentTimer.pausedRemainingMs ?? currentTimer.durationMs;
-  const payload: RoomTimerData = {
-    ...currentTimer,
-    durationMs,
-    startedAt: serverTimestamp() as unknown as number,
-    pausedRemainingMs: null,
-    updatedBy: username,
-  };
-  await set(timerRef, payload);
+  await runTransaction(timerRef, (current: RoomTimerData | null) => {
+    // Only resume if currently paused
+    if (!current || current.startedAt != null || current.pausedRemainingMs == null) {
+      return current;
+    }
+    return {
+      ...current,
+      durationMs: current.pausedRemainingMs,
+      startedAt: serverTimestamp(),
+      pausedRemainingMs: null,
+      updatedBy: username,
+    };
+  });
 }
 
+/**
+ * RESET: back to idle focus with the full focus length, round unchanged.
+ */
 export async function resetTimer(
   code: string,
   focusMinutes: number,
   username: string
 ): Promise<void> {
   const timerRef = ref(rtdb, `rooms/${code}/timer`);
-  const payload: RoomTimerData = {
-    mode: 'focus',
-    durationMs: focusMinutes * 60 * 1000,
-    startedAt: null,
-    pausedRemainingMs: null,
-    round: 1,
-    updatedBy: username,
-  };
-  await set(timerRef, payload);
+  await runTransaction(timerRef, (current: RoomTimerData | null) => {
+    const fullDurationMs = focusMinutes * 60 * 1000;
+    return {
+      mode: 'focus',
+      durationMs: fullDurationMs,
+      startedAt: null,
+      pausedRemainingMs: null,
+      round: current?.round || 1,
+      updatedBy: username,
+    };
+  });
 }
 
+/**
+ * SKIP: advance to next phase immediately.
+ */
 export async function skipTimer(
   code: string,
-  currentTimer: RoomTimerData,
   focusMinutes: number,
   breakMinutes: number,
   username: string
 ): Promise<void> {
   const timerRef = ref(rtdb, `rooms/${code}/timer`);
-  const nextMode = currentTimer.mode === 'focus' ? 'break' : 'focus';
-  const nextDurationMs = (nextMode === 'break' ? breakMinutes : focusMinutes) * 60 * 1000;
-  const nextRound = currentTimer.mode === 'break' ? currentTimer.round + 1 : currentTimer.round;
+  await runTransaction(timerRef, (current: RoomTimerData | null) => {
+    const nextMode = current?.mode === 'focus' ? 'break' : 'focus';
+    const nextDurationMs = (nextMode === 'break' ? breakMinutes : focusMinutes) * 60 * 1000;
+    const nextRound = current?.mode === 'break' ? (current.round || 1) + 1 : (current?.round || 1);
 
-  const payload: RoomTimerData = {
-    mode: nextMode,
-    durationMs: nextDurationMs,
-    startedAt: serverTimestamp() as unknown as number,
-    pausedRemainingMs: null,
-    round: nextRound,
-    updatedBy: username,
-  };
-  await set(timerRef, payload);
+    return {
+      mode: nextMode,
+      durationMs: nextDurationMs,
+      startedAt: serverTimestamp(),
+      pausedRemainingMs: null,
+      round: nextRound,
+      updatedBy: username,
+    };
+  });
+}
+
+/**
+ * Updates timer duration immediately if currently idle.
+ */
+export async function updateIdleTimerDuration(
+  code: string,
+  newFocusMinutes: number
+): Promise<void> {
+  const timerRef = ref(rtdb, `rooms/${code}/timer`);
+  await runTransaction(timerRef, (current: RoomTimerData | null) => {
+    // Only apply immediately if idle (startedAt == null && pausedRemainingMs == null)
+    if (!current || (current.startedAt == null && current.pausedRemainingMs == null)) {
+      return {
+        mode: 'focus',
+        durationMs: newFocusMinutes * 60 * 1000,
+        startedAt: null,
+        pausedRemainingMs: null,
+        round: current?.round || 1,
+        updatedBy: 'Settings',
+      };
+    }
+    return current;
+  });
 }
 
 /**
  * Concurrency-safe phase advance.
+ * NEVER fires if paused or idle (startedAt must be non-null).
  * Only succeeds if round and mode match what triggered the advance, preventing duplicate advancements.
  */
 export async function advanceTimerPhase(
@@ -174,8 +253,20 @@ export async function advanceTimerPhase(
     const result = await runTransaction(timerRef, (current: RoomTimerData | null) => {
       if (!current) return current;
 
+      // CRITICAL: NEVER auto-advance if paused or idle!
+      if (current.startedAt == null) {
+        return undefined;
+      }
+
       // Abort if another client already advanced
       if (current.round !== triggeringRound || current.mode !== triggeringMode) {
+        return undefined;
+      }
+
+      const serverNow = Date.now() + cachedServerOffset;
+      const elapsed = serverNow - current.startedAt;
+      if (elapsed < current.durationMs) {
+        // Not yet expired
         return undefined;
       }
 

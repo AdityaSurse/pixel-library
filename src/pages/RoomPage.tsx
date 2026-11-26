@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { PixelCanvas, NativePointerCoords } from '../engine/PixelCanvas';
@@ -20,6 +20,7 @@ import {
   resetTimer,
   skipTimer,
   advanceTimerPhase,
+  updateIdleTimerDuration,
   RoomTimerData,
 } from '../services/roomTimer';
 import { playPhaseEndChime } from '../services/audioChime';
@@ -29,6 +30,7 @@ import { renderRoomScene } from '../components/room/RoomSceneRenderer';
 import { RoomHUD } from '../components/room/RoomHUD';
 import { WhosHereDrawer } from '../components/room/WhosHereDrawer';
 import { RoomClockPanel } from '../components/room/RoomClockPanel';
+import { RoomSettingsModal } from '../components/room/RoomSettingsModal';
 import { RoomToasts, ToastMessage } from '../components/room/RoomToasts';
 
 interface RoomData {
@@ -66,6 +68,7 @@ export const RoomPage: React.FC = () => {
   const [streakFireUntilMs, setStreakFireUntilMs] = useState(0);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Animation & presence refs
   const squashMapRef = useRef<Map<string, number>>(new Map());
@@ -203,18 +206,33 @@ export const RoomPage: React.FC = () => {
 
       // Dynamic Tab Title
       if (timer && timer.startedAt !== null) {
+        // Running
         const secs = Math.max(0, Math.ceil(rem / 1000));
         const m = Math.floor(secs / 60);
         const s = secs % 60;
         const icon = timer.mode === 'focus' ? '🍅' : '☕';
         const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         document.title = `${icon} ${formatted} · Pixel Library`;
+      } else if (timer && timer.startedAt === null && timer.pausedRemainingMs !== null) {
+        // Paused
+        const secs = Math.max(0, Math.ceil(rem / 1000));
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        document.title = `⏸ ${formatted} · Pixel Library`;
       } else {
+        // Idle
         document.title = `${room.name || 'Study Room'} · Pixel Library`;
       }
 
-      // Check for Phase End (Auto-Advance)
-      if (timer && timer.startedAt !== null && rem <= 0 && !isAdvancingRef.current) {
+      // Check for Phase End (Auto-Advance). NEVER fire while paused or idle!
+      if (
+        timer &&
+        timer.startedAt !== null &&
+        timer.pausedRemainingMs === null &&
+        rem <= 0 &&
+        !isAdvancingRef.current
+      ) {
         isAdvancingRef.current = true;
 
         // Play 3-note synthesized chime
@@ -334,16 +352,16 @@ export const RoomPage: React.FC = () => {
   }, [cleanCode, room, profile, addToast]);
 
   const handlePauseTimer = useCallback(async () => {
-    if (!timer || !profile) return;
-    await pauseTimer(cleanCode, timer, remainingMs, profile.username);
+    if (!profile) return;
+    await pauseTimer(cleanCode, profile.username);
     addToast(`${profile.username} paused the timer`, 'info');
-  }, [cleanCode, timer, remainingMs, profile, addToast]);
+  }, [cleanCode, profile, addToast]);
 
   const handleResumeTimer = useCallback(async () => {
-    if (!timer || !profile) return;
-    await resumeTimer(cleanCode, timer, profile.username);
+    if (!profile) return;
+    await resumeTimer(cleanCode, profile.username);
     addToast(`${profile.username} resumed the timer`, 'info');
-  }, [cleanCode, timer, profile, addToast]);
+  }, [cleanCode, profile, addToast]);
 
   const handleResetTimer = useCallback(async () => {
     if (!room || !profile) return;
@@ -352,10 +370,34 @@ export const RoomPage: React.FC = () => {
   }, [cleanCode, room, profile, addToast]);
 
   const handleSkipTimer = useCallback(async () => {
-    if (!timer || !room || !profile) return;
-    await skipTimer(cleanCode, timer, room.focusMinutes, room.breakMinutes, profile.username);
+    if (!room || !profile) return;
+    await skipTimer(cleanCode, room.focusMinutes, room.breakMinutes, profile.username);
     addToast(`${profile.username} skipped to next phase`, 'info');
-  }, [cleanCode, timer, room, profile, addToast]);
+  }, [cleanCode, room, profile, addToast]);
+
+  const handleSaveSettings = useCallback(
+    async (newFocus: number, newBreak: number) => {
+      if (!cleanCode) return;
+      try {
+        await updateDoc(doc(db, 'rooms', cleanCode), {
+          focusMinutes: newFocus,
+          breakMinutes: newBreak,
+        });
+        setRoom((prev) =>
+          prev ? { ...prev, focusMinutes: newFocus, breakMinutes: newBreak } : null
+        );
+        // If timer is idle/reset, apply new focus duration immediately
+        if (timer?.startedAt == null && timer?.pausedRemainingMs == null) {
+          await updateIdleTimerDuration(cleanCode, newFocus);
+        }
+        addToast('Room timer settings updated', 'info');
+      } catch (err) {
+        console.error('Failed to update timer settings:', err);
+        addToast('Failed to update settings', 'info');
+      }
+    },
+    [cleanCode, timer, addToast]
+  );
 
   // 9. Canvas Scene Render Loop
   const handleRender = useCallback(
@@ -488,6 +530,17 @@ export const RoomPage: React.FC = () => {
         onResume={handleResumeTimer}
         onReset={handleResetTimer}
         onSkip={handleSkipTimer}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
+      {/* Timer Settings Modal (Owner editable, non-owner read-only) */}
+      <RoomSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        isOwner={Boolean(user && room && room.ownerUid === user.uid)}
+        currentFocusMinutes={room?.focusMinutes || 25}
+        currentBreakMinutes={room?.breakMinutes || 5}
+        onSave={handleSaveSettings}
       />
 
       {/* Who's Here Drawer */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RoomTimerData } from '../../services/roomTimer';
+import { RoomTimerData, getTimerUIState } from '../../services/roomTimer';
 import { isChimeMuted, setChimeMuted } from '../../services/audioChime';
 
 interface RoomClockPanelProps {
@@ -11,6 +11,7 @@ interface RoomClockPanelProps {
   onResume: () => void;
   onReset: () => void;
   onSkip: () => void;
+  onOpenSettings: () => void;
 }
 
 export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
@@ -22,6 +23,7 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
   onResume,
   onReset,
   onSkip,
+  onOpenSettings,
 }) => {
   const [muted, setMuted] = useState(isChimeMuted());
 
@@ -31,8 +33,11 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
     setChimeMuted(nextMuted);
   };
 
-  const isRunning = Boolean(timer && timer.startedAt !== null);
-  const isPaused = Boolean(timer && timer.startedAt === null && timer.pausedRemainingMs !== null);
+  const uiState = getTimerUIState(timer);
+  const isRunning = uiState === 'running';
+  const isPaused = uiState === 'paused';
+  const isIdle = uiState === 'idle';
+
   const mode = timer?.mode || 'focus';
   const round = timer?.round || 1;
 
@@ -46,6 +51,18 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
   const totalDuration = timer?.durationMs || 1;
   const elapsed = totalDuration - remainingMs;
   const progressPercent = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+
+  // Determine mode display text and color
+  let modeLabel = 'FOCUS TIME';
+  let modeColor = '#d9463b';
+
+  if (isPaused) {
+    modeLabel = 'PAUSED';
+    modeColor = '#e0a84a';
+  } else if (mode === 'break') {
+    modeLabel = 'REST BREAK';
+    modeColor = '#4fa36a';
+  }
 
   return (
     <div
@@ -61,7 +78,7 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.85)',
       }}
     >
-      {/* Header: Mode Label & Mute Button */}
+      {/* Header: Mode Label & Utility Buttons */}
       <div
         style={{
           width: '100%',
@@ -82,40 +99,65 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
           />
           <span
             className="px-20"
-            style={{ color: mode === 'focus' ? '#d9463b' : '#4fa36a', textTransform: 'uppercase' }}
+            style={{ color: modeColor, textTransform: 'uppercase' }}
           >
-            {mode === 'focus' ? 'FOCUS TIME' : 'REST BREAK'}
+            {modeLabel}
           </span>
         </div>
 
-        {/* Chime Mute Toggle */}
-        <button
-          onClick={handleToggleMute}
-          className="pixel-btn pixel-btn-secondary"
-          title={muted ? 'Unmute chime' : 'Mute chime'}
-          style={{
-            padding: '2px 8px',
-            minHeight: '26px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            opacity: muted ? 0.6 : 1,
-          }}
-        >
-          <img
-            src="/pixel-library-assets/icons/music.png"
-            alt="Music"
-            style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
-          />
-          <span className="px-10">{muted ? 'OFF' : 'ON'}</span>
-        </button>
+        {/* Action icons: Settings & Chime Mute */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Settings Button */}
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="pixel-btn pixel-btn-secondary"
+            title="Timer Settings"
+            style={{
+              padding: '2px 6px',
+              minHeight: '26px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <img
+              src="/pixel-library-assets/icons/clock.png"
+              alt="Settings"
+              style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
+            />
+          </button>
+
+          {/* Chime Mute Toggle */}
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            className="pixel-btn pixel-btn-secondary"
+            title={muted ? 'Unmute chime' : 'Mute chime'}
+            style={{
+              padding: '2px 8px',
+              minHeight: '26px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              opacity: muted ? 0.6 : 1,
+            }}
+          >
+            <img
+              src="/pixel-library-assets/icons/music.png"
+              alt="Music"
+              style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
+            />
+            <span className="px-10">{muted ? 'OFF' : 'ON'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Main 60px Countdown */}
       <div
         className="px-60"
         style={{
-          color: '#ffe2a0',
+          color: isPaused ? '#e0a84a' : '#ffe2a0',
           letterSpacing: '2px',
           lineHeight: '1.1',
           margin: '2px 0',
@@ -152,7 +194,7 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
             position: 'absolute',
             top: 0,
             left: 0,
-            width: `${progressPercent}%`,
+            width: `${isIdle ? 0 : progressPercent}%`,
             height: '24px',
             overflow: 'hidden',
           }}
@@ -175,7 +217,7 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
         Round {round} · {readersCount} {readersCount === 1 ? 'reader' : 'readers'} together
       </div>
 
-      {/* Controls */}
+      {/* Controls: Exactly one main button (START / PAUSE / RESUME) + SKIP + RESET */}
       <div
         style={{
           display: 'flex',
@@ -185,11 +227,12 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
           width: '100%',
         }}
       >
-        {!isRunning && !isPaused && (
+        {isIdle && (
           <button
+            type="button"
             onClick={onStart}
             className="pixel-btn pixel-btn-primary"
-            style={{ minHeight: '32px', padding: '0 12px' }}
+            style={{ minHeight: '32px', padding: '0 14px' }}
           >
             <span className="px-10">START</span>
           </button>
@@ -197,9 +240,10 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
 
         {isRunning && (
           <button
+            type="button"
             onClick={onPause}
             className="pixel-btn pixel-btn-secondary"
-            style={{ minHeight: '32px', padding: '0 12px' }}
+            style={{ minHeight: '32px', padding: '0 14px' }}
           >
             <span className="px-10">PAUSE</span>
           </button>
@@ -207,15 +251,17 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
 
         {isPaused && (
           <button
+            type="button"
             onClick={onResume}
             className="pixel-btn pixel-btn-primary"
-            style={{ minHeight: '32px', padding: '0 12px' }}
+            style={{ minHeight: '32px', padding: '0 14px' }}
           >
             <span className="px-10">RESUME</span>
           </button>
         )}
 
         <button
+          type="button"
           onClick={onSkip}
           className="pixel-btn pixel-btn-secondary"
           style={{ minHeight: '32px', padding: '0 10px' }}
@@ -225,6 +271,7 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
         </button>
 
         <button
+          type="button"
           onClick={onReset}
           className="pixel-btn pixel-btn-secondary"
           style={{ minHeight: '32px', padding: '0 10px' }}

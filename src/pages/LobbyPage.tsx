@@ -13,6 +13,7 @@ import { renderLandingScene } from '../components/landing/renderLandingScene';
 import { RoomCodeInput } from '../components/lobby/RoomCodeInput';
 import { ShareRoomModal } from '../components/lobby/ShareRoomModal';
 import { RecentRoomsList } from '../components/lobby/RecentRoomsList';
+import { PixelStepper } from '../components/common/PixelStepper';
 
 const ALLOWED_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
@@ -39,8 +40,10 @@ export const LobbyPage: React.FC = () => {
   }, [profile?.username]);
 
   const [createName, setCreateName] = useState(defaultRoomName);
-  const [focusMinutes, setFocusMinutes] = useState<25 | 50>(25);
-  const [breakMinutes, setBreakMinutes] = useState<5 | 10>(5);
+  const [focusMinutes, setFocusMinutes] = useState<number>(25);
+  const [breakMinutes, setBreakMinutes] = useState<number>(5);
+  const [isCustomFocus, setIsCustomFocus] = useState<boolean>(false);
+  const [isCustomBreak, setIsCustomBreak] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createdRoomInfo, setCreatedRoomInfo] = useState<{
     code: string;
@@ -382,24 +385,27 @@ export const LobbyPage: React.FC = () => {
                 />
               </div>
 
-              {/* Focus Length Toggle */}
+              {/* Focus Length Options */}
               <div>
                 <span className="px-10" style={{ color: '#5c3a26', display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>
                   FOCUS LENGTH:
                 </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: isCustomFocus ? '8px' : '0' }}>
                   <button
                     type="button"
-                    onClick={() => setFocusMinutes(25)}
+                    onClick={() => {
+                      setFocusMinutes(25);
+                      setIsCustomFocus(false);
+                    }}
                     style={{
                       flex: 1,
                       fontFamily: 'Quietpage, monospace',
                       fontSize: '20px',
                       height: '42px',
-                      backgroundColor: focusMinutes === 25 ? '#4fa36a' : '#f6edc8',
+                      backgroundColor: !isCustomFocus && focusMinutes === 25 ? '#4fa36a' : '#f6edc8',
                       color: '#1b1423',
                       border: '3px solid #1b1423',
-                      boxShadow: focusMinutes === 25 ? 'inset 0 -4px #2f7a4f' : 'none',
+                      boxShadow: !isCustomFocus && focusMinutes === 25 ? 'inset 0 -4px #2f7a4f' : 'none',
                       cursor: 'pointer',
                       outline: 'none',
                     }}
@@ -408,43 +414,78 @@ export const LobbyPage: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFocusMinutes(50)}
+                    onClick={() => {
+                      setFocusMinutes(50);
+                      setIsCustomFocus(false);
+                    }}
                     style={{
                       flex: 1,
                       fontFamily: 'Quietpage, monospace',
                       fontSize: '20px',
                       height: '42px',
-                      backgroundColor: focusMinutes === 50 ? '#4fa36a' : '#f6edc8',
+                      backgroundColor: !isCustomFocus && focusMinutes === 50 ? '#4fa36a' : '#f6edc8',
                       color: '#1b1423',
                       border: '3px solid #1b1423',
-                      boxShadow: focusMinutes === 50 ? 'inset 0 -4px #2f7a4f' : 'none',
+                      boxShadow: !isCustomFocus && focusMinutes === 50 ? 'inset 0 -4px #2f7a4f' : 'none',
                       cursor: 'pointer',
                       outline: 'none',
                     }}
                   >
                     50 min
                   </button>
-                </div>
-              </div>
-
-              {/* Break Length Toggle */}
-              <div>
-                <span className="px-10" style={{ color: '#5c3a26', display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>
-                  BREAK LENGTH:
-                </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     type="button"
-                    onClick={() => setBreakMinutes(5)}
+                    onClick={() => setIsCustomFocus(true)}
                     style={{
                       flex: 1,
                       fontFamily: 'Quietpage, monospace',
                       fontSize: '20px',
                       height: '42px',
-                      backgroundColor: breakMinutes === 5 ? '#e0a84a' : '#f6edc8',
+                      backgroundColor: isCustomFocus ? '#4fa36a' : '#f6edc8',
                       color: '#1b1423',
                       border: '3px solid #1b1423',
-                      boxShadow: breakMinutes === 5 ? 'inset 0 -4px #b07a2c' : 'none',
+                      boxShadow: isCustomFocus ? 'inset 0 -4px #2f7a4f' : 'none',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {isCustomFocus && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+                    <PixelStepper
+                      value={focusMinutes}
+                      min={1}
+                      max={120}
+                      onChange={setFocusMinutes}
+                      unit="min"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Break Length Options */}
+              <div>
+                <span className="px-10" style={{ color: '#5c3a26', display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>
+                  BREAK LENGTH:
+                </span>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: isCustomBreak ? '8px' : '0' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBreakMinutes(5);
+                      setIsCustomBreak(false);
+                    }}
+                    style={{
+                      flex: 1,
+                      fontFamily: 'Quietpage, monospace',
+                      fontSize: '20px',
+                      height: '42px',
+                      backgroundColor: !isCustomBreak && breakMinutes === 5 ? '#e0a84a' : '#f6edc8',
+                      color: '#1b1423',
+                      border: '3px solid #1b1423',
+                      boxShadow: !isCustomBreak && breakMinutes === 5 ? 'inset 0 -4px #b07a2c' : 'none',
                       cursor: 'pointer',
                       outline: 'none',
                     }}
@@ -453,23 +494,69 @@ export const LobbyPage: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setBreakMinutes(10)}
+                    onClick={() => {
+                      setBreakMinutes(10);
+                      setIsCustomBreak(false);
+                    }}
                     style={{
                       flex: 1,
                       fontFamily: 'Quietpage, monospace',
                       fontSize: '20px',
                       height: '42px',
-                      backgroundColor: breakMinutes === 10 ? '#e0a84a' : '#f6edc8',
+                      backgroundColor: !isCustomBreak && breakMinutes === 10 ? '#e0a84a' : '#f6edc8',
                       color: '#1b1423',
                       border: '3px solid #1b1423',
-                      boxShadow: breakMinutes === 10 ? 'inset 0 -4px #b07a2c' : 'none',
+                      boxShadow: !isCustomBreak && breakMinutes === 10 ? 'inset 0 -4px #b07a2c' : 'none',
                       cursor: 'pointer',
                       outline: 'none',
                     }}
                   >
                     10 min
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomBreak(true)}
+                    style={{
+                      flex: 1,
+                      fontFamily: 'Quietpage, monospace',
+                      fontSize: '20px',
+                      height: '42px',
+                      backgroundColor: isCustomBreak ? '#e0a84a' : '#f6edc8',
+                      color: '#1b1423',
+                      border: '3px solid #1b1423',
+                      boxShadow: isCustomBreak ? 'inset 0 -4px #b07a2c' : 'none',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                  >
+                    Custom
+                  </button>
                 </div>
+                {isCustomBreak && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+                    <PixelStepper
+                      value={breakMinutes}
+                      min={1}
+                      max={30}
+                      onChange={setBreakMinutes}
+                      unit="min"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Chosen Values Summary */}
+              <div
+                className="px-10"
+                style={{
+                  color: '#7a4d31',
+                  textAlign: 'center',
+                  padding: '4px',
+                  backgroundColor: '#eddcb4',
+                  border: '1px solid #c2b189',
+                }}
+              >
+                Focus {focusMinutes} min · Break {breakMinutes} min
               </div>
 
               {/* Create Room Button */}
