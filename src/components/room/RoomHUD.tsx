@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { TimePreference } from '../../engine/timeOfDay';
 
 const SunIcon: React.FC<{ active?: boolean }> = ({ active }) => (
@@ -39,6 +39,7 @@ interface RoomHUDProps {
   onToggleNames: () => void;
   onOpenGoal?: () => void;
   onOpenLeaderboard?: () => void;
+  onOpenShortcuts?: () => void;
   onStandUp: () => void;
   onLeave: () => void;
 }
@@ -57,20 +58,33 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
   onToggleNames,
   onOpenGoal,
   onOpenLeaderboard,
+  onOpenShortcuts,
   onStandUp,
   onLeave,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const fallbackInputRef = useRef<HTMLInputElement>(null);
 
   const handleCopyLink = async () => {
     const url = `${window.location.origin}/room/${roomCode}`;
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setCopyFailed(false);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        throw new Error('Clipboard API unavailable');
+      }
     } catch {
-      // Fallback prompt
-      window.prompt('Copy room link:', url);
+      setCopyFailed(true);
+      setTimeout(() => {
+        if (fallbackInputRef.current) {
+          fallbackInputRef.current.focus();
+          fallbackInputRef.current.select();
+        }
+      }, 50);
     }
   };
 
@@ -130,25 +144,65 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
         </div>
 
         {/* Copy Link Button */}
-        <button
-          onClick={handleCopyLink}
-          className="pixel-btn pixel-btn-secondary"
-          style={{
-            minHeight: '36px',
-            padding: '0 10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-          title="Copy room link"
-        >
-          <img
-            src="/pixel-library-assets/icons/link.png"
-            alt="Link"
-            style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
-          />
-          <span className="px-10">{copied ? 'COPIED!' : 'COPY LINK'}</span>
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={handleCopyLink}
+            className="pixel-btn pixel-btn-secondary"
+            style={{
+              minHeight: '36px',
+              padding: '0 10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="Copy room link"
+          >
+            <img
+              src={copied ? '/pixel-library-assets/icons/check.png' : '/pixel-library-assets/icons/link.png'}
+              alt=""
+              style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
+            />
+            <span className="px-10">{copied ? 'COPIED!' : copyFailed ? 'Press Cmd/Ctrl + C' : 'COPY LINK'}</span>
+          </button>
+          {copyFailed && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                marginTop: '4px',
+                zIndex: 60,
+                backgroundColor: '#241a2e',
+                border: '2px solid #5c3a26',
+                padding: '6px 8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.85)',
+              }}
+            >
+              <div className="px-10" style={{ color: '#ffe2a0', whiteSpace: 'nowrap' }}>
+                Press Cmd/Ctrl + C
+              </div>
+              <input
+                ref={fallbackInputRef}
+                type="text"
+                readOnly
+                value={`${window.location.origin}/room/${roomCode}`}
+                style={{
+                  fontFamily: 'Quietpage, monospace',
+                  fontSize: '10px',
+                  padding: '4px 6px',
+                  backgroundColor: '#fff0b0',
+                  color: '#1b1423',
+                  border: '1px solid #1b1423',
+                  width: '200px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Sun/Moon Day-Night Toggle */}
         <div
@@ -270,6 +324,24 @@ export const RoomHUD: React.FC<RoomHUDProps> = ({
             style={{ width: 14, height: 14, imageRendering: 'pixelated' }}
           />
           <span className="px-10">BOARD</span>
+        </button>
+
+        {/* Keyboard Shortcuts Help Button */}
+        <button
+          type="button"
+          onClick={onOpenShortcuts}
+          className="pixel-btn pixel-btn-secondary"
+          style={{
+            minHeight: '36px',
+            padding: '0 10px',
+            fontFamily: 'Quietpage, monospace',
+            fontSize: '20px',
+            lineHeight: 1,
+            color: '#ffe2a0',
+          }}
+          title="Keyboard Shortcuts (?)"
+        >
+          ?
         </button>
 
         {/* Goal Button (visible when seated) */}

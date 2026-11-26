@@ -61,12 +61,34 @@ export const LobbyPage: React.FC = () => {
     return profile?.username ? `${profile.username}'s table` : "Reader's table";
   }, [profile?.username]);
 
+  const initialSettings = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('pl:lastRoomSettings');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {
+      console.error('Failed to load last room settings:', e);
+    }
+    return {};
+  }, []);
+
   const [createName, setCreateName] = useState(defaultRoomName);
-  const [selectedTheme, setSelectedTheme] = useState<ThemeId>('classic');
-  const [focusMinutes, setFocusMinutes] = useState<number>(25);
-  const [breakMinutes, setBreakMinutes] = useState<number>(5);
-  const [isCustomFocus, setIsCustomFocus] = useState<boolean>(false);
-  const [isCustomBreak, setIsCustomBreak] = useState<boolean>(false);
+  const [selectedTheme, setSelectedTheme] = useState<ThemeId>(
+    () => initialSettings.theme || 'classic'
+  );
+  const [focusMinutes, setFocusMinutes] = useState<number>(
+    () => (typeof initialSettings.focusMinutes === 'number' ? initialSettings.focusMinutes : 25)
+  );
+  const [breakMinutes, setBreakMinutes] = useState<number>(
+    () => (typeof initialSettings.breakMinutes === 'number' ? initialSettings.breakMinutes : 5)
+  );
+  const [isCustomFocus, setIsCustomFocus] = useState<boolean>(() => {
+    const m = typeof initialSettings.focusMinutes === 'number' ? initialSettings.focusMinutes : 25;
+    return m !== 25 && m !== 50;
+  });
+  const [isCustomBreak, setIsCustomBreak] = useState<boolean>(() => {
+    const m = typeof initialSettings.breakMinutes === 'number' ? initialSettings.breakMinutes : 5;
+    return m !== 5 && m !== 10;
+  });
   const [isCreating, setIsCreating] = useState(false);
   const [createdRoomInfo, setCreatedRoomInfo] = useState<{
     code: string;
@@ -185,6 +207,20 @@ export const LobbyPage: React.FC = () => {
 
       // 3. Open share modal
       setCreatedRoomInfo({ code, name: finalName, theme: selectedTheme });
+
+      // 4. Save chosen settings to localStorage
+      try {
+        localStorage.setItem(
+          'pl:lastRoomSettings',
+          JSON.stringify({
+            theme: selectedTheme,
+            focusMinutes,
+            breakMinutes,
+          })
+        );
+      } catch (e) {
+        console.error('Failed to save last room settings:', e);
+      }
     } catch (err: unknown) {
       console.error('Failed to create room:', err);
     } finally {
@@ -480,8 +516,37 @@ export const LobbyPage: React.FC = () => {
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.9)',
             }}
           >
-            <div className="px-30" style={{ color: '#1b1423' }}>
-              CREATE A ROOM
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="px-30" style={{ color: '#1b1423' }}>
+                CREATE A ROOM
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedTheme('classic');
+                  setFocusMinutes(25);
+                  setBreakMinutes(5);
+                  setIsCustomFocus(false);
+                  setIsCustomBreak(false);
+                  try {
+                    localStorage.removeItem('pl:lastRoomSettings');
+                  } catch (e) {
+                    console.error('Failed to clear last room settings:', e);
+                  }
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontFamily: 'Quietpage, monospace',
+                  fontSize: '10px',
+                  color: '#7a4d31',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: '2px 4px',
+                }}
+              >
+                Reset to default
+              </button>
             </div>
 
             <form onSubmit={handleCreateRoom} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>

@@ -25,7 +25,9 @@ import {
   updateIdleTimerDuration,
   RoomTimerData,
 } from '../services/roomTimer';
-import { playPhaseEndChime } from '../services/audioChime';
+import { playPhaseEndChime, playNudgeTick, isChimeMuted, setChimeMuted } from '../services/audioChime';
+import { preloadTimerFavicons, updateTimerFavicon, restoreDefaultFavicon } from '../engine/faviconManager';
+import { KeyboardShortcutsModal } from '../components/room/KeyboardShortcutsModal';
 import { recordPomodoroCompletion } from '../services/userStats';
 import { getSeatAtCoords, getNoteAtCoords } from '../components/room/roomGeometry';
 import { renderRoomScene } from '../components/room/RoomSceneRenderer';
@@ -94,6 +96,17 @@ export const RoomPage: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isClockNudging, setIsClockNudging] = useState(false);
+  const lastNudgedPhaseRef = useRef<string | null>(null);
+
+  // Preload timer favicons and restore default on leaving room
+  useEffect(() => {
+    preloadTimerFavicons().catch(console.error);
+    return () => {
+      restoreDefaultFavicon();
+    };
+  }, []);
 
   // Weekly Leaderboard state
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -399,6 +412,7 @@ export const RoomPage: React.FC = () => {
         const modeLabel = timer.mode === 'focus' ? 'Focus' : 'Break';
         const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         document.title = `${modeLabel} ${formatted} · Pixel Library`;
+        updateTimerFavicon(timer.mode === 'focus' ? 'focus' : 'break');
       } else if (timer && timer.startedAt === null && timer.pausedRemainingMs !== null) {
         // Paused
         const secs = Math.max(0, Math.ceil(rem / 1000));
@@ -406,9 +420,37 @@ export const RoomPage: React.FC = () => {
         const s = secs % 60;
         const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         document.title = `Paused ${formatted} · Pixel Library`;
+        updateTimerFavicon('idle');
       } else {
         // Idle
         document.title = `${room.name || 'Study Room'} · Pixel Library`;
+        updateTimerFavicon('idle');
+      }
+
+      // "5 Minutes Left" Nudge:
+      // When focus timer crosses 5:00 remaining (<= 300000ms), blink clock panel border in #d9463b 3 times
+      // and play single soft square-wave tick via Web Audio API. Fire only once per focus phase; do not fire if total duration <= 5 min.
+      if (
+        timer &&
+        timer.mode === 'focus' &&
+        timer.startedAt !== null &&
+        timer.pausedRemainingMs === null &&
+        timer.durationMs > 300000 &&
+        rem <= 300000 &&
+        rem > 0
+      ) {
+        const phaseKey = `${cleanCode}_${timer.round}_${timer.startedAt}`;
+        if (lastNudgedPhaseRef.current !== phaseKey) {
+          lastNudgedPhaseRef.current = phaseKey;
+          playNudgeTick();
+          const reducedMotion =
+            typeof window !== 'undefined' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (!reducedMotion) {
+            setIsClockNudging(true);
+            setTimeout(() => setIsClockNudging(false), 900);
+          }
+        }
       }
 
       // Check for Phase End (Auto-Advance). NEVER fire while paused or idle!
@@ -620,6 +662,70 @@ export const RoomPage: React.FC = () => {
     await skipTimer(cleanCode, room.focusMinutes, room.breakMinutes, profile.username);
     addToast(`${profile.username} skipped to next phase`, 'info');
   }, [cleanCode, room, profile, addToast]);
+
+  // 8b. Keyboard Shortcuts (Room page only)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore all shortcuts when typing in input, textarea, or contentEditable
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        const tagName = activeEl.tagName.toLowerCase();
+        if (
+          tagName === 'input' ||
+          tagName === 'textarea' ||
+          (activeEl as HTMLElement).isContentEditable
+        ) {
+          return;
+        }
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (timer && timer.startedAt !== null) {
+          handlePauseTimer();
+        } else if (timer && timer.startedAt === null && timer.pausedRemainingMs !== null) {
+          handleResumeTimer();
+        } else {
+          handleStartTimer();
+        }
+      } else if (e.key === 'g' || e.key === 'G') {
+        e.preventDefault();
+        setIsGoalModalOpen((prev) => !prev);
+      } else if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        setIsLeaderboardOpen((prev) => !prev);
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        setShowAllNames((prev) => !prev);
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        const nextMuted = !isChimeMuted();
+        setChimeMuted(nextMuted);
+        window.dispatchEvent(new CustomEvent('chime-mute-changed', { detail: nextMuted }));
+        addToast(nextMuted ? 'Chime muted' : 'Chime unmuted', 'info');
+      } else if (e.key === 'Escape') {
+        setIsShortcutsOpen(false);
+        setIsLeaderboardOpen(false);
+        setIsGoalModalOpen(false);
+        setIsGoalFinishModalOpen(false);
+        setIsSettingsOpen(false);
+        setIsDrawerOpen(false);
+        setActiveNoteTooltip(null);
+      } else if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    timer,
+    handlePauseTimer,
+    handleResumeTimer,
+    handleStartTimer,
+    addToast,
+  ]);
 
   // Goal actions
   const handleSaveGoal = useCallback(
@@ -852,6 +958,7 @@ export const RoomPage: React.FC = () => {
         onToggleNames={() => setShowAllNames((prev) => !prev)}
         onOpenGoal={() => setIsGoalModalOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenShortcuts={() => setIsShortcutsOpen((prev) => !prev)}
         onStandUp={handleStandUp}
         onLeave={handleLeave}
       />
@@ -861,6 +968,7 @@ export const RoomPage: React.FC = () => {
         timer={timer}
         remainingMs={remainingMs}
         readersCount={Object.keys(presence).length}
+        isNudging={isClockNudging}
         onStart={handleStartTimer}
         onPause={handlePauseTimer}
         onResume={handleResumeTimer}
@@ -923,6 +1031,11 @@ export const RoomPage: React.FC = () => {
         members={leaderboardMembers}
         currentUid={user?.uid || null}
       />
+
+      {/* Keyboard Shortcuts Modal */}
+      {isShortcutsOpen && (
+        <KeyboardShortcutsModal onClose={() => setIsShortcutsOpen(false)} />
+      )}
     </div>
   );
 };

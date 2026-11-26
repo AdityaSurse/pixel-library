@@ -316,4 +316,25 @@ html, body {
   }
 }
 
+/* 5 Minutes Left Clock Panel Nudge (3 hard on/off blinks in #d9463b, 150ms each) */
+@keyframes clock-nudge-blink {
+  0%, 16.6% { border-color: #d9463b !important; }
+  16.7%, 33.3% { border-color: #5c3a26 !important; }
+  33.4%, 50% { border-color: #d9463b !important; }
+  50.1%, 66.6% { border-color: #5c3a26 !important; }
+  66.7%, 83.3% { border-color: #d9463b !important; }
+  83.4%, 100% { border-color: #5c3a26 !important; }
+}
+
+.clock-panel-nudging {
+  animation: clock-nudge-blink 0.9s steps(1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-panel-nudging {
+    animation: none !important;
+  }
+}
+
+
 

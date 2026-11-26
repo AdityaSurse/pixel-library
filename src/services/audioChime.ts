@@ -66,3 +66,36 @@ export function playPhaseEndChime(): void {
     osc.stop(now + start + dur);
   });
 }
+
+/**
+ * Plays a single soft square-wave tick for the 5-minute remaining nudge
+ */
+export function playNudgeTick(): void {
+  if (isChimeMuted()) return;
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(440, now); // gentle A4 tick
+
+  // Lowpass filter to soften 8-bit edge
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(1000, now);
+
+  gain.gain.setValueAtTime(0.06, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.08);
+}
+

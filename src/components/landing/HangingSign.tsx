@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { getDailyQuote } from '../../data/quotes';
 
 interface HangingSignProps {
   scale: number;
@@ -27,6 +28,7 @@ export const HangingSign: React.FC<HangingSignProps> = ({
   }, []);
 
   const isMobile = windowWidth < 640;
+  const dailyQuote = useMemo(() => getDailyQuote(), []);
 
   // Animation Stage: 'drop' | 'swing' | 'reveal' | 'typing' | 'button'
   const [stage, setStage] = useState<'drop' | 'swing' | 'reveal' | 'typing' | 'button'>(() =>
@@ -35,6 +37,10 @@ export const HangingSign: React.FC<HangingSignProps> = ({
 
   const [typedChars, setTypedChars] = useState(() =>
     prefersReducedMotion ? FULL_TAGLINE.length : 0
+  );
+
+  const [typedQuoteChars, setTypedQuoteChars] = useState(() =>
+    prefersReducedMotion ? dailyQuote.length : 0
   );
 
   const [swayAngle, setSwayAngle] = useState(0);
@@ -86,6 +92,7 @@ export const HangingSign: React.FC<HangingSignProps> = ({
     if (prefersReducedMotion) {
       setStage('button');
       setTypedChars(FULL_TAGLINE.length);
+      setTypedQuoteChars(dailyQuote.length);
       return;
     }
 
@@ -111,25 +118,41 @@ export const HangingSign: React.FC<HangingSignProps> = ({
     };
   }, [prefersReducedMotion]);
 
-  // Typing effect at 60ms per letter
+  // Typing effect: welcome line at 60ms, then daily quote at 40ms
   useEffect(() => {
     if (stage !== 'typing') return;
 
     let current = 0;
+    let quoteCurrent = 0;
+    let quoteInterval: number | null = null;
+
     const interval = window.setInterval(() => {
       current += 1;
       setTypedChars(current);
       if (current >= FULL_TAGLINE.length) {
         window.clearInterval(interval);
-        // Stage 5: Button pop-in
+        // Start typing daily quote after a brief pause
         window.setTimeout(() => {
-          setStage('button');
-        }, 150);
+          quoteInterval = window.setInterval(() => {
+            quoteCurrent += 1;
+            setTypedQuoteChars(quoteCurrent);
+            if (quoteCurrent >= dailyQuote.length) {
+              if (quoteInterval) window.clearInterval(quoteInterval);
+              // Stage 5: Button pop-in
+              window.setTimeout(() => {
+                setStage('button');
+              }, 150);
+            }
+          }, 40);
+        }, 120);
       }
     }, 60);
 
-    return () => window.clearInterval(interval);
-  }, [stage]);
+    return () => {
+      window.clearInterval(interval);
+      if (quoteInterval) window.clearInterval(quoteInterval);
+    };
+  }, [stage, dailyQuote.length]);
 
   // Dimensions
   const borderWidth = Math.max(8, isMobile ? 8 : 8 * scale);
@@ -360,7 +383,7 @@ export const HangingSign: React.FC<HangingSignProps> = ({
             </div>
           </div>
 
-          {/* Tagline: "Welcome, reader." typed in at 20px with blinking block cursor */}
+          {/* Tagline: "Welcome, reader." typed in at 20px */}
           <div
             className="px-20"
             style={{
@@ -376,20 +399,54 @@ export const HangingSign: React.FC<HangingSignProps> = ({
             {stage === 'drop' || stage === 'swing' ? null : (
               <>
                 <span>{FULL_TAGLINE.slice(0, typedChars)}</span>
+                {typedChars < FULL_TAGLINE.length && (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '10px',
+                      height: '16px',
+                      backgroundColor: '#1b1423',
+                      marginLeft: '2px',
+                      verticalAlign: 'middle',
+                      animation: 'blink-cursor 0.7s steps(1) infinite',
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Daily Quote: Quietpage 10px (20px desktop) in palette wd_md (#7a4d31) */}
+          {(stage === 'typing' || stage === 'button') && typedChars >= FULL_TAGLINE.length && (
+            <div
+              className={isMobile ? 'px-10' : 'px-20'}
+              style={{
+                color: '#7a4d31', // palette wd_md
+                minHeight: isMobile ? '16px' : '26px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                userSelect: 'none',
+                marginTop: '2px',
+                textAlign: 'center',
+              }}
+            >
+              <span>{dailyQuote.slice(0, typedQuoteChars)}</span>
+              {stage === 'typing' && typedQuoteChars < dailyQuote.length && (
                 <span
                   style={{
                     display: 'inline-block',
-                    width: '10px',
-                    height: '16px',
-                    backgroundColor: '#1b1423',
+                    width: isMobile ? '6px' : '10px',
+                    height: isMobile ? '10px' : '16px',
+                    backgroundColor: '#7a4d31',
                     marginLeft: '2px',
                     verticalAlign: 'middle',
                     animation: 'blink-cursor 0.7s steps(1) infinite',
                   }}
                 />
-              </>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Join Now / Enter Library Button */}

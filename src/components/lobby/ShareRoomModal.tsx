@@ -17,6 +17,7 @@ export const ShareRoomModal: React.FC<ShareRoomModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const themeInfo = getThemeInfo(theme);
@@ -27,21 +28,20 @@ export const ShareRoomModal: React.FC<ShareRoomModalProps> = ({
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(roomUrl);
         setCopied(true);
+        setCopyFailed(false);
+        setTimeout(() => {
+          setCopied(false);
+        }, 2000);
       } else {
         throw new Error('Clipboard API unavailable');
       }
     } catch {
-      // Fallback
+      setCopyFailed(true);
       if (inputRef.current) {
+        inputRef.current.focus();
         inputRef.current.select();
-        document.execCommand('copy');
-        setCopied(true);
       }
     }
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
   };
 
   const handleEnterRoom = () => {
@@ -200,13 +200,13 @@ export const ShareRoomModal: React.FC<ShareRoomModalProps> = ({
             }}
           >
             <img
-              src="/pixel-library-assets/icons/link.png"
+              src={copied ? '/pixel-library-assets/icons/check.png' : '/pixel-library-assets/icons/link.png'}
               alt=""
               width="14"
               height="14"
               style={{ imageRendering: 'pixelated' }}
             />
-            {copied ? 'COPIED TO CLIPBOARD!' : 'COPY LINK'}
+            {copied ? 'COPIED!' : copyFailed ? 'Press Cmd/Ctrl + C' : 'COPY LINK'}
           </button>
         </div>
 

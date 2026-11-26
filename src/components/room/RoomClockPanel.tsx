@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RoomTimerData, getTimerUIState } from '../../services/roomTimer';
 import { isChimeMuted, setChimeMuted } from '../../services/audioChime';
 
@@ -6,6 +6,7 @@ interface RoomClockPanelProps {
   timer: RoomTimerData | null;
   remainingMs: number;
   readersCount: number;
+  isNudging?: boolean;
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
@@ -18,6 +19,7 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
   timer,
   remainingMs,
   readersCount,
+  isNudging = false,
   onStart,
   onPause,
   onResume,
@@ -27,10 +29,17 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
 }) => {
   const [muted, setMuted] = useState(isChimeMuted());
 
+  useEffect(() => {
+    const handleMuteChange = () => setMuted(isChimeMuted());
+    window.addEventListener('chime-mute-changed', handleMuteChange);
+    return () => window.removeEventListener('chime-mute-changed', handleMuteChange);
+  }, []);
+
   const handleToggleMute = () => {
     const nextMuted = !muted;
     setMuted(nextMuted);
     setChimeMuted(nextMuted);
+    window.dispatchEvent(new CustomEvent('chime-mute-changed', { detail: nextMuted }));
   };
 
   const uiState = getTimerUIState(timer);
@@ -66,7 +75,7 @@ export const RoomClockPanel: React.FC<RoomClockPanelProps> = ({
 
   return (
     <div
-      className="pixel-panel-sm room-clock-panel"
+      className={`pixel-panel-sm room-clock-panel ${isNudging ? 'clock-panel-nudging' : ''}`}
       style={{
         backgroundColor: '#241a2e',
         border: '3px solid #5c3a26',
