@@ -76,6 +76,61 @@ export function drawAvatar(
 }
 
 /**
+ * Draws an accessory from accessories_sheet.png at 18x22, matching avatar frame & squash.
+ */
+export function drawAccessory(
+  ctx: CanvasRenderingContext2D,
+  accessoryRowIndex: number,
+  frame: number | AvatarFrameName,
+  x: number,
+  y: number,
+  scaleX: number = 1,
+  scaleY: number = 1
+): void {
+  if (accessoryRowIndex < 0 || accessoryRowIndex > 6) return;
+  const sheet = getImage('accessories_sheet');
+  const frameIdx = getFrameIndex(frame);
+
+  const frameWidth = 18;
+  const frameHeight = 22;
+
+  const sx = frameIdx * frameWidth;
+  const sy = accessoryRowIndex * frameHeight;
+
+  if (scaleX !== 1 || scaleY !== 1) {
+    ctx.save();
+    const centerX = x + frameWidth / 2;
+    const bottomY = y + frameHeight;
+    ctx.translate(Math.round(centerX), Math.round(bottomY));
+    ctx.scale(scaleX, scaleY);
+    ctx.drawImage(
+      sheet,
+      sx,
+      sy,
+      frameWidth,
+      frameHeight,
+      Math.round(-frameWidth / 2),
+      Math.round(-frameHeight),
+      frameWidth,
+      frameHeight
+    );
+    ctx.restore();
+  } else {
+    ctx.drawImage(
+      sheet,
+      sx,
+      sy,
+      frameWidth,
+      frameHeight,
+      Math.round(x),
+      Math.round(y),
+      frameWidth,
+      frameHeight
+    );
+  }
+}
+
+/**
  * Draws the near-seat chair backrest on top of an occupied near seat.
  */
 export function drawChairNear(

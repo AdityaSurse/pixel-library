@@ -1,6 +1,7 @@
 import React from 'react';
 import { RoomPresenceMap } from '../../services/roomPresence';
 import { layout } from '../../engine/assets';
+import { getAccessoryRow } from '../../lib/unlocks';
 
 interface WhosHereDrawerProps {
   presence: RoomPresenceMap;
@@ -163,6 +164,7 @@ export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
                 {/* 18x16 Head Sprite */}
                 <div
                   style={{
+                    position: 'relative',
                     width: '36px',
                     height: '32px',
                     minWidth: '36px',
@@ -173,7 +175,24 @@ export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
                     border: '1px solid #5c3a26',
                     backgroundColor: '#1b1423',
                   }}
-                />
+                >
+                  {reader.accessory && getAccessoryRow(reader.accessory) >= 0 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '36px',
+                        height: '32px',
+                        backgroundImage: "url('/pixel-library-themes/unlockables/accessories_sheet.png')",
+                        backgroundPosition: `-${0 * 36}px -${getAccessoryRow(reader.accessory) * 44}px`,
+                        backgroundSize: '288px 308px',
+                        imageRendering: 'pixelated',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div

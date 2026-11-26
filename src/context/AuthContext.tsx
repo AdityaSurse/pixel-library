@@ -16,11 +16,18 @@ export interface UserProfile {
   username: string;
   preset: string; // avatar preset name (aditya, meera, etc.)
   presetIndex: number;
+  accessory?: string | null;
   displayName: string | null;
   photoURL: string | null;
   createdAt?: unknown;
   updatedAt?: unknown;
   stats: UserStats;
+  unlocked?: {
+    themes?: string[];
+    accessories?: string[];
+    badges?: string[];
+  };
+  badges?: Record<string, boolean | string>;
 }
 
 export interface AuthContextValue {

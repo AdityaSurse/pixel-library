@@ -8,7 +8,7 @@
           ".read": "auth != null",
           "$uid": {
             ".write": "auth != null && auth.uid == $uid",
-            ".validate": "newData.hasChildren(['username', 'preset', 'status']) && newData.child('status').val().matches(/^(browsing|studying|break|away)$/) && newData.child('preset').val().matches(/^(aditya|meera|kabir|zoya|rohan|tara|ishaan|anya)$/) && newData.child('username').val().matches(/^[a-z0-9_]{1,16}$/) && (!newData.child('goal').exists() || (newData.child('goal').hasChildren(['text', 'status']) && newData.child('goal/text').isString() && newData.child('goal/text').val().length <= 60 && newData.child('goal/status').val().matches(/^(open|done|missed)$/)))"
+            ".validate": "newData.hasChildren(['username', 'preset', 'status']) && newData.child('status').val().matches(/^(browsing|studying|break|away)$/) && newData.child('preset').val().matches(/^(aditya|meera|kabir|zoya|rohan|tara|ishaan|anya)$/) && newData.child('username').val().matches(/^[a-z0-9_]{1,16}$/) && (!newData.child('goal').exists() || (newData.child('goal').hasChildren(['text', 'status']) && newData.child('goal/text').isString() && newData.child('goal/text').val().length <= 60 && newData.child('goal/status').val().matches(/^(open|done|missed)$/))) && (!newData.child('accessory').exists() || newData.child('accessory').val() == null || newData.child('accessory').val().matches(/^(beanie|crown|headphones|wizard_hat|flower_crown|cat_ears|grad_cap)$/))"
           }
         },
         "seats": {

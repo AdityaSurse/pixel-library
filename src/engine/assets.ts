@@ -88,7 +88,10 @@ export type ImageKey =
   | 'note_done'
   | 'note_missed'
   | 'goal_card_pinned'
-  | 'goal_card_pinned_4x';
+  | 'goal_card_pinned_4x'
+  | 'accessories_sheet'
+  | 'lock'
+  | 'lock_4x';
 
 const IMAGE_PATHS: Record<ImageKey, string> = {
   bg: '/pixel-library-assets/backgrounds/library_bg.png',
@@ -125,6 +128,9 @@ const IMAGE_PATHS: Record<ImageKey, string> = {
   note_missed: '/pixel-library-themes/goal-card/note_missed.png',
   goal_card_pinned: '/pixel-library-themes/goal-card/goal_card_pinned.png',
   goal_card_pinned_4x: '/pixel-library-themes/goal-card/goal_card_pinned@4x.png',
+  accessories_sheet: '/pixel-library-themes/unlockables/accessories_sheet.png',
+  lock: '/pixel-library-themes/badges/lock.png',
+  lock_4x: '/pixel-library-themes/badges/lock@4x.png',
 };
 
 export const images: Partial<Record<ImageKey, HTMLImageElement>> = {};

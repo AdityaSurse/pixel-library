@@ -7,6 +7,7 @@ import {
 } from '../../engine/themes';
 import {
   drawAvatar,
+  drawAccessory,
   drawChairNear,
   drawBubbleCoffee,
   drawBubbleFire,
@@ -19,6 +20,7 @@ import {
 import { drawAtlasNameTag, drawGoalSpeechBubble } from '../../engine/atlasText';
 import { RoomPresenceMap, RoomSeatsMap } from '../../services/roomPresence';
 import { getUserPhaseOffset, getDeskNoteCoords } from './roomGeometry';
+import { getAccessoryRow } from '../../lib/unlocks';
 
 export interface RoomRenderParams {
   presence: RoomPresenceMap;
@@ -196,6 +198,12 @@ export function renderRoomScene(
         : 0;
 
     drawAvatar(ctx, pIdx, frame, seat.avatar.x, seat.avatar.y, scaleX, scaleY);
+    if (reader.accessory) {
+      const accRow = getAccessoryRow(reader.accessory);
+      if (accRow >= 0) {
+        drawAccessory(ctx, accRow, frame, seat.avatar.x, seat.avatar.y, scaleX, scaleY);
+      }
+    }
   }
 
   // Layer 3: Near-Seat Avatars (frames 4-7, back view)
@@ -230,6 +238,12 @@ export function renderRoomScene(
         : 0;
 
     drawAvatar(ctx, pIdx, frame, seat.avatar.x, seat.avatar.y, scaleX, scaleY);
+    if (reader.accessory) {
+      const accRow = getAccessoryRow(reader.accessory);
+      if (accRow >= 0) {
+        drawAccessory(ctx, accRow, frame, seat.avatar.x, seat.avatar.y, scaleX, scaleY);
+      }
+    }
   }
 
   // Layer 4: Chair Backrest Occlusion over every occupied near seat

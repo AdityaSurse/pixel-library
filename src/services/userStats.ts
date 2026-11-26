@@ -1,6 +1,13 @@
 import { doc, getDoc, updateDoc, setDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getLocalDateString, notifyHeatmapUpdate } from './heatmapService';
+import {
+  checkForNewUnlocks,
+  evaluateAllUnlocks,
+  markUnlocksAsSeen,
+  triggerUnlockCelebration,
+} from '../lib/unlocks';
+import { UserProfile, UserStats } from '../context/AuthContext';
 
 export interface PomodoroCompletionResult {
   awarded: boolean;
@@ -58,6 +65,18 @@ export async function recordPomodoroCompletion(
 
     const newLongest = Math.max(newStreak, oldLongest);
 
+    // Check night_owl / early_bird badges based on user's local time
+    const now = new Date();
+    const hour = now.getHours();
+    const badgeUpdates: Record<string, boolean> = {};
+
+    if ((hour >= 0 && hour < 4) || (hour === 4 && now.getMinutes() === 0)) {
+      badgeUpdates['badges.night_owl'] = true;
+    }
+    if ((hour >= 5 && hour < 8) || (hour === 8 && now.getMinutes() === 0)) {
+      badgeUpdates['badges.early_bird'] = true;
+    }
+
     await updateDoc(userRef, {
       'stats.pomodoros': increment(1),
       'stats.minutesFocused': increment(focusMinutes),
@@ -65,6 +84,7 @@ export async function recordPomodoroCompletion(
       'stats.longestStreak': newLongest,
       'stats.lastStudyDate': today,
       lastCountedRound: roundId,
+      ...badgeUpdates,
     });
 
     // Also increment users/{uid}/days/{YYYY-MM-DD} (user's LOCAL date)
@@ -80,6 +100,38 @@ export async function recordPomodoroCompletion(
 
     // Notify session heatmap cache & trigger today's cell outline blink
     notifyHeatmapUpdate(uid, today, focusMinutes);
+
+    // Run unlock check after every counted Pomodoro
+    try {
+      const updatedStats: UserStats = {
+        pomodoros: (data.stats?.pomodoros || 0) + 1,
+        minutesFocused: (data.stats?.minutesFocused || 0) + focusMinutes,
+        streakDays: newStreak,
+        longestStreak: newLongest,
+        lastStudyDate: today,
+      };
+
+      const updatedBadges = {
+        ...(data.badges || {}),
+        ...(badgeUpdates['badges.night_owl'] ? { night_owl: true } : {}),
+        ...(badgeUpdates['badges.early_bird'] ? { early_bird: true } : {}),
+      };
+
+      const updatedProfile: UserProfile = {
+        ...(data as UserProfile),
+        stats: updatedStats,
+        badges: updatedBadges,
+      };
+
+      const newUnlocks = checkForNewUnlocks(updatedProfile);
+      if (newUnlocks.length > 0) {
+        newUnlocks.forEach((item) => triggerUnlockCelebration(item));
+        const allEvaluated = evaluateAllUnlocks(updatedStats, updatedBadges);
+        await markUnlocksAsSeen(uid, allEvaluated);
+      }
+    } catch (unlockErr) {
+      console.error('Failed to evaluate unlocks after pomodoro:', unlockErr);
+    }
 
     return {
       awarded: true,

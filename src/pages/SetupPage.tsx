@@ -11,6 +11,17 @@ import { useAuth } from '../context/AuthContext';
 import { layout } from '../engine/assets';
 import { TableZoomPreview } from '../components/setup/TableZoomPreview';
 import { StudyMapCard } from '../components/heatmap/StudyMapCard';
+import { BadgesShelf } from '../components/badges/BadgesShelf';
+import {
+  ACCESSORIES,
+  getAccessoryUnlockProgress,
+  checkForNewUnlocks,
+  markUnlocksAsSeen,
+  evaluateAllUnlocks,
+  onNewUnlockCelebration,
+  UnlockCelebrationItem,
+} from '../lib/unlocks';
+import { UnlockCelebrationModal } from '../components/unlocks/UnlockCelebrationModal';
 
 const PRESETS = layout.presets; // 8 presets: aditya, meera, kabir, zoya, rohan, tara, ishaan, anya
 
@@ -29,6 +40,49 @@ export const SetupPage: React.FC = () => {
   const [selectedPresetIndex, setSelectedPresetIndex] = useState<number>(() => {
     return profile?.presetIndex ?? 0;
   });
+
+  const [selectedAccessory, setSelectedAccessory] = useState<string | null>(() => {
+    return profile?.accessory ?? null;
+  });
+
+  const [celebrationItem, setCelebrationItem] = useState<UnlockCelebrationItem | null>(null);
+
+  useEffect(() => {
+    if (profile?.accessory !== undefined) {
+      setSelectedAccessory(profile.accessory);
+    }
+  }, [profile?.accessory]);
+
+  // Check for unseen unlocks when profile is loaded
+  useEffect(() => {
+    if (!user || !profile) return;
+    const items = checkForNewUnlocks(profile);
+    if (items.length > 0) {
+      setCelebrationItem(items[0]);
+    }
+  }, [user, profile]);
+
+  useEffect(() => {
+    const unsub = onNewUnlockCelebration((item) => {
+      setCelebrationItem(item);
+    });
+    return unsub;
+  }, []);
+
+  const handleDismissCelebration = async () => {
+    if (!user || !profile) {
+      setCelebrationItem(null);
+      return;
+    }
+    const currentAll = evaluateAllUnlocks(profile.stats, profile.badges);
+    await markUnlocksAsSeen(user.uid, currentAll);
+    const remaining = checkForNewUnlocks(profile);
+    if (remaining.length > 1) {
+      setCelebrationItem(remaining[1]);
+    } else {
+      setCelebrationItem(null);
+    }
+  };
 
   const [usernameInput, setUsernameInput] = useState<string>(() => {
     return profile?.username ?? '';
@@ -171,6 +225,7 @@ export const SetupPage: React.FC = () => {
             username: cleanUsername,
             preset: presetName,
             presetIndex: selectedPresetIndex,
+            accessory: selectedAccessory || null,
             updatedAt: serverTimestamp(),
           });
         } else {
@@ -179,6 +234,7 @@ export const SetupPage: React.FC = () => {
             username: cleanUsername,
             preset: presetName,
             presetIndex: selectedPresetIndex,
+            accessory: selectedAccessory || null,
             displayName: user.displayName || cleanUsername,
             photoURL: user.photoURL || null,
             createdAt: serverTimestamp(),
@@ -245,6 +301,7 @@ export const SetupPage: React.FC = () => {
           <TableZoomPreview
             presetIndex={selectedPresetIndex}
             username={usernameInput || 'reader'}
+            accessory={selectedAccessory}
           />
         </div>
 
@@ -364,6 +421,179 @@ export const SetupPage: React.FC = () => {
                   );
                 })}
               </div>
+            </div>
+
+            {/* ACCESSORIES ROW */}
+            <div>
+              <div
+                className="px-10"
+                style={{
+                  color: '#5c3a26',
+                  marginBottom: '6px',
+                  fontWeight: 'bold',
+                  letterSpacing: '0.5px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span>CHOOSE YOUR ACCESSORY:</span>
+                <span style={{ color: selectedAccessory ? '#ffe2a0' : '#b9a98a', textTransform: 'capitalize' }}>
+                  {selectedAccessory ? selectedAccessory.replace('_', ' ') : 'None'}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '8px',
+                  backgroundColor: '#241a2e',
+                  padding: '8px',
+                  border: '2px solid #1b1423',
+                }}
+              >
+                {/* Slot 0: None */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedAccessory(null)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px 2px',
+                    backgroundColor: selectedAccessory === null ? '#3a2419' : 'transparent',
+                    border: selectedAccessory === null ? '3px solid #d9463b' : '3px solid transparent',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  title="No accessory"
+                >
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '32px',
+                      backgroundImage: "url('/pixel-library-assets/sprites/avatars/avatar_heads.png')",
+                      backgroundPosition: `-${selectedPresetIndex * 36}px 0px`,
+                      backgroundSize: '288px 32px',
+                      imageRendering: 'pixelated',
+                      border: '1px solid #3a2419',
+                    }}
+                  />
+                  <span
+                    className="px-10"
+                    style={{
+                      color: selectedAccessory === null ? '#ffe2a0' : '#b9a98a',
+                      marginTop: '2px',
+                    }}
+                  >
+                    None
+                  </span>
+                </button>
+
+                {/* Slots 1-7: The 7 Accessories from accessories_sheet.png */}
+                {ACCESSORIES.map((acc) => {
+                  const progress = getAccessoryUnlockProgress(acc.id, profile?.stats);
+                  const isLocked = !progress.isUnlocked;
+                  const isSelected = selectedAccessory === acc.id;
+
+                  return (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      disabled={isLocked}
+                      onClick={() => !isLocked && setSelectedAccessory(acc.id)}
+                      title={isLocked ? `Locked: ${progress.label}` : acc.name}
+                      style={{
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '4px 2px',
+                        backgroundColor: isSelected ? '#3a2419' : 'transparent',
+                        border: isSelected ? '3px solid #d9463b' : '3px solid transparent',
+                        cursor: isLocked ? 'not-allowed' : 'pointer',
+                        opacity: isLocked ? 0.45 : 1,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {/* Avatar preview head with frame 2 of accessory on top */}
+                      <div
+                        style={{
+                          position: 'relative',
+                          width: '36px',
+                          height: '32px',
+                          backgroundImage: "url('/pixel-library-assets/sprites/avatars/avatar_heads.png')",
+                          backgroundPosition: `-${selectedPresetIndex * 36}px 0px`,
+                          backgroundSize: '288px 32px',
+                          imageRendering: 'pixelated',
+                          border: '1px solid #3a2419',
+                        }}
+                      >
+                        {/* Frame 2 of accessory row */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '36px',
+                            height: '32px',
+                            backgroundImage: "url('/pixel-library-themes/unlockables/accessories_sheet.png')",
+                            backgroundPosition: `-${2 * 36}px -${acc.row * 44}px`,
+                            backgroundSize: '288px 308px',
+                            imageRendering: 'pixelated',
+                            pointerEvents: 'none',
+                          }}
+                        />
+
+                        {/* Lock Icon if locked */}
+                        {isLocked && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '2px',
+                              right: '2px',
+                              zIndex: 5,
+                            }}
+                          >
+                            <img
+                              src="/pixel-library-themes/badges/lock.png"
+                              alt="Locked"
+                              width="10"
+                              height="11"
+                              style={{ imageRendering: 'pixelated' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <span
+                        className="px-10"
+                        style={{
+                          color: isSelected ? '#ffe2a0' : isLocked ? '#7a6452' : '#b9a98a',
+                          marginTop: '2px',
+                          fontSize: '10px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '64px',
+                        }}
+                      >
+                        {acc.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* BADGES SHELF ON LIBRARY CARD */}
+            <div>
+              <BadgesShelf stats={profile?.stats} userBadges={profile?.badges} />
             </div>
 
             {/* USERNAME INPUT */}
@@ -514,6 +744,13 @@ export const SetupPage: React.FC = () => {
             <StudyMapCard />
           </div>
         )}
+
+        {/* UNLOCK CELEBRATION MODAL */}
+        <UnlockCelebrationModal
+          isOpen={celebrationItem !== null}
+          item={celebrationItem}
+          onDismiss={handleDismissCelebration}
+        />
       </div>
     </div>
   );

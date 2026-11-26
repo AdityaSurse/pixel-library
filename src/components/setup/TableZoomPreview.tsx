@@ -1,11 +1,13 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { getImage } from '../../engine/assets';
-import { drawAvatar, drawBubbleHeart } from '../../engine/sprites';
+import { drawAvatar, drawAccessory, drawBubbleHeart } from '../../engine/sprites';
 import { drawAtlasNameTag } from '../../engine/atlasText';
+import { getAccessoryRow } from '../../lib/unlocks';
 
 interface TableZoomPreviewProps {
   presetIndex: number;
   username: string;
+  accessory?: string | null;
 }
 
 const NATIVE_W = 120;
@@ -14,6 +16,7 @@ const NATIVE_H = 100;
 export const TableZoomPreview: React.FC<TableZoomPreviewProps> = ({
   presetIndex,
   username,
+  accessory,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -58,6 +61,13 @@ export const TableZoomPreview: React.FC<TableZoomPreviewProps> = ({
         // Front break animation frames: 2 and 3 (2 fps = 500ms per frame)
         const breakFrame = 2 + Math.floor((timeMs / 500) % 2);
         drawAvatar(ctx, presetIndex, breakFrame, avatarX, avatarY);
+
+        if (accessory) {
+          const row = getAccessoryRow(accessory);
+          if (row >= 0) {
+            drawAccessory(ctx, row, breakFrame, avatarX, avatarY);
+          }
+        }
 
         // 3. Heart Bubble Reaction when preset changes
         const heartElapsed = timeMs - heartTriggerTimeRef.current;

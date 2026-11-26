@@ -20,6 +20,7 @@ export interface ReaderPresence {
   username: string;
   preset: string;
   presetIndex: number;
+  accessory?: string | null;
   seatId: string | null;
   status: ReaderStatus;
   joinedAt: number | object;
@@ -98,6 +99,7 @@ export function initRoomPresence(
         username: profile.username,
         preset: profile.preset,
         presetIndex: profile.presetIndex ?? 0,
+        accessory: profile.accessory || null,
         seatId: currentSeatId,
         status: currentStatus,
         joinedAt: serverTimestamp(),

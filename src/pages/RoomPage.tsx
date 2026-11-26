@@ -42,6 +42,14 @@ import {
   clearReaderGoal,
   saveCompletedGoalToFirestore,
 } from '../services/goalService';
+import {
+  onNewUnlockCelebration,
+  checkForNewUnlocks,
+  markUnlocksAsSeen,
+  evaluateAllUnlocks,
+  UnlockCelebrationItem,
+} from '../lib/unlocks';
+import { UnlockCelebrationModal } from '../components/unlocks/UnlockCelebrationModal';
 
 interface RoomData {
   code: string;
@@ -91,6 +99,31 @@ export const RoomPage: React.FC = () => {
     username: string;
     text: string;
   } | null>(null);
+
+  // Unlock celebration state
+  const [celebrationItem, setCelebrationItem] = useState<UnlockCelebrationItem | null>(null);
+
+  useEffect(() => {
+    const unsub = onNewUnlockCelebration((item) => {
+      setCelebrationItem(item);
+    });
+    return unsub;
+  }, []);
+
+  const handleDismissCelebration = async () => {
+    if (!user || !profile) {
+      setCelebrationItem(null);
+      return;
+    }
+    const currentAll = evaluateAllUnlocks(profile.stats, profile.badges);
+    await markUnlocksAsSeen(user.uid, currentAll);
+    const remaining = checkForNewUnlocks(profile);
+    if (remaining.length > 1) {
+      setCelebrationItem(remaining[1]);
+    } else {
+      setCelebrationItem(null);
+    }
+  };
 
   // Time of Day (Auto / Day / Night) and 2-second crossfade
   const { timeOfDay, preference: timePreference, setPreference: setTimePreference } = useTimeOfDay();
@@ -821,6 +854,13 @@ export const RoomPage: React.FC = () => {
         goalText={pendingFinishGoal?.text || ''}
         onDone={handleGoalDone}
         onNotYet={handleGoalNotYet}
+      />
+
+      {/* Unlock Celebration Modal */}
+      <UnlockCelebrationModal
+        isOpen={celebrationItem !== null}
+        item={celebrationItem}
+        onDismiss={handleDismissCelebration}
       />
     </div>
   );

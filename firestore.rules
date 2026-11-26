@@ -7,6 +7,11 @@ service cloud.firestore {
       return preset in ['aditya', 'meera', 'kabir', 'zoya', 'rohan', 'tara', 'ishaan', 'anya'];
     }
 
+    // Allowed accessory IDs
+    function isValidAccessory(acc) {
+      return acc == null || acc in ['beanie', 'crown', 'headphones', 'wizard_hat', 'flower_crown', 'cat_ears', 'grad_cap'];
+    }
+
     // Allowed library theme IDs
     function isValidTheme(theme) {
       return theme in ['classic', 'vampire', 'renaissance', 'midnight', 'cherry', 'space', 'cafe', 'greathall'];
@@ -23,7 +28,8 @@ service cloud.firestore {
       allow create, update: if request.auth != null 
                             && request.auth.uid == uid
                             && isValidUsername(request.resource.data.username)
-                            && isValidPreset(request.resource.data.preset);
+                            && isValidPreset(request.resource.data.preset)
+                            && (!('accessory' in request.resource.data) || isValidAccessory(request.resource.data.accessory));
       allow delete: if false;
 
       // User's recent rooms subcollection
