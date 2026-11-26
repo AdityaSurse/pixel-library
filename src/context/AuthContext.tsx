@@ -7,6 +7,7 @@ export interface UserStats {
   pomodoros: number;
   minutesFocused: number;
   streakDays: number;
+  longestStreak?: number;
   lastStudyDate: string | null;
 }
 

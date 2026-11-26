@@ -1,5 +1,6 @@
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { getLocalDateString, notifyHeatmapUpdate } from './heatmapService';
 
 export interface PomodoroCompletionResult {
   awarded: boolean;
@@ -30,12 +31,13 @@ export async function recordPomodoroCompletion(
       return { awarded: false, streakIncreased: false, newStreak: data.stats?.streakDays || 1 };
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     const yesterdayDate = new Date();
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterday = yesterdayDate.toISOString().slice(0, 10);
+    const yesterday = getLocalDateString(yesterdayDate);
 
     const oldStreak = data.stats?.streakDays || 0;
+    const oldLongest = data.stats?.longestStreak || 0;
     const lastStudyDate = data.stats?.lastStudyDate;
 
     let newStreak = 1;
@@ -54,13 +56,30 @@ export async function recordPomodoroCompletion(
       streakIncreased = oldStreak === 0;
     }
 
+    const newLongest = Math.max(newStreak, oldLongest);
+
     await updateDoc(userRef, {
       'stats.pomodoros': increment(1),
       'stats.minutesFocused': increment(focusMinutes),
       'stats.streakDays': newStreak,
+      'stats.longestStreak': newLongest,
       'stats.lastStudyDate': today,
       lastCountedRound: roundId,
     });
+
+    // Also increment users/{uid}/days/{YYYY-MM-DD} (user's LOCAL date)
+    const dayRef = doc(db, 'users', uid, 'days', today);
+    await setDoc(
+      dayRef,
+      {
+        pomodoros: increment(1),
+        minutes: increment(focusMinutes),
+      },
+      { merge: true }
+    );
+
+    // Notify session heatmap cache & trigger today's cell outline blink
+    notifyHeatmapUpdate(uid, today, focusMinutes);
 
     return {
       awarded: true,

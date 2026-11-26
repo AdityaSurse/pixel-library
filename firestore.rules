@@ -41,6 +41,17 @@ service cloud.firestore {
                       && request.resource.data.status in ['done', 'missed'];
         allow update, delete: if false;
       }
+
+      // User's daily activity heatmap subcollection
+      match /days/{date} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if request.auth != null 
+                     && request.auth.uid == uid
+                     && request.resource.data.pomodoros is number
+                     && request.resource.data.pomodoros >= 0
+                     && request.resource.data.minutes is number
+                     && request.resource.data.minutes >= 0;
+      }
     }
 
     // Unique Username Registry

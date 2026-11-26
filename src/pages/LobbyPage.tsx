@@ -16,6 +16,7 @@ import { RecentRoomsList } from '../components/lobby/RecentRoomsList';
 import { PixelStepper } from '../components/common/PixelStepper';
 import { ThemeId, getThemeList } from '../engine/themes';
 import { getWeeklyGoalsDoneCount } from '../services/goalService';
+import { StudyMapCard } from '../components/heatmap/StudyMapCard';
 
 const ALLOWED_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
@@ -389,6 +390,9 @@ export const LobbyPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* STUDY MAP HEATMAP PANEL */}
+        <StudyMapCard />
 
         {/* TWO-COLUMN GRID ON DESKTOP, ONE-COLUMN ON PHONES */}
         <div

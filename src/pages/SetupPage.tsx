@@ -10,6 +10,7 @@ import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { layout } from '../engine/assets';
 import { TableZoomPreview } from '../components/setup/TableZoomPreview';
+import { StudyMapCard } from '../components/heatmap/StudyMapCard';
 
 const PRESETS = layout.presets; // 8 presets: aditya, meera, kabir, zoya, rohan, tara, ishaan, anya
 
@@ -506,6 +507,13 @@ export const SetupPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* STUDY MAP PANEL (EDIT CARD SCREEN) */}
+        {user && (
+          <div style={{ width: '100%', maxWidth: '820px' }}>
+            <StudyMapCard />
+          </div>
+        )}
       </div>
     </div>
   );
