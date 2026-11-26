@@ -1,0 +1,22 @@
+{
+ "ink": "#2a1e1a",
+ "wd": "#9a7448",
+ "wd_md": "#b8905a",
+ "wd_hi": "#d4ac74",
+ "wd_dk": "#6a4e30",
+ "shelf_back": "#4a3420",
+ "book_band": "#c86b86",
+ "tbl": "#c8a06a",
+ "tbl_hi": "#dcb880",
+ "tbl_grain": "#b8905a",
+ "tbl_front": "#9a7448",
+ "tbl_leg": "#6a4e30",
+ "ch": "#c86b86",
+ "ch_hi": "#e8a0b0",
+ "ch_dk": "#9a4a64",
+ "light": "#ffe6b0",
+ "lamp_b": "#6a4e30",
+ "plaque_rim": "#6a4e30",
+ "plaque_bg": "#f4ecd8",
+ "plaque_txt": "#9a4a64"
+}

@@ -1,0 +1,63 @@
+{
+ "themes": [
+  {
+   "id": "classic",
+   "name": "Classic Library",
+   "folder": "themes/classic",
+   "accent": "#ffe2a0"
+  },
+  {
+   "id": "vampire",
+   "name": "Vampire Archive",
+   "folder": "themes/vampire",
+   "accent": "#ff8a4a"
+  },
+  {
+   "id": "renaissance",
+   "name": "Renaissance Study",
+   "folder": "themes/renaissance",
+   "accent": "#ffd890"
+  },
+  {
+   "id": "midnight",
+   "name": "Midnight Dark Mode",
+   "folder": "themes/midnight",
+   "accent": "#7ae8f0"
+  },
+  {
+   "id": "cherry",
+   "name": "Cherry Blossom Reading Room",
+   "folder": "themes/cherry",
+   "accent": "#ffe6b0"
+  },
+  {
+   "id": "space",
+   "name": "Space Station Library",
+   "folder": "themes/space",
+   "accent": "#7ae8f0"
+  },
+  {
+   "id": "cafe",
+   "name": "Rainy Caf\u00e9 Library",
+   "folder": "themes/cafe",
+   "accent": "#ffc070"
+  },
+  {
+   "id": "greathall",
+   "name": "Great Hall",
+   "folder": "themes/greathall",
+   "accent": "#ffd080"
+  }
+ ],
+ "files": {
+  "background": "library_bg_{time}.png",
+  "lighting": "lighting_{time}.png",
+  "chair_near": "chair_near.png",
+  "preview": "preview_{time}@4x.png"
+ },
+ "times": [
+  "day",
+  "night"
+ ],
+ "note": "All themes share layout.json seats and draw order. Use chair_near.png from the room theme folder."
+}

@@ -1,0 +1,128 @@
+{
+ "themes": [
+  {
+   "id": "classic",
+   "unlock": "free"
+  },
+  {
+   "id": "midnight",
+   "unlock": "free"
+  },
+  {
+   "id": "cherry",
+   "unlock": {
+    "pomodoros": 10
+   }
+  },
+  {
+   "id": "cafe",
+   "unlock": {
+    "pomodoros": 25
+   }
+  },
+  {
+   "id": "renaissance",
+   "unlock": {
+    "pomodoros": 50
+   }
+  },
+  {
+   "id": "space",
+   "unlock": {
+    "streakDays": 7
+   }
+  },
+  {
+   "id": "greathall",
+   "unlock": {
+    "pomodoros": 100
+   }
+  },
+  {
+   "id": "vampire",
+   "unlock": {
+    "minutesFocused": 3000
+   }
+  }
+ ],
+ "accessories": [
+  {
+   "id": "beanie",
+   "row": 0
+  },
+  {
+   "id": "crown",
+   "row": 1
+  },
+  {
+   "id": "headphones",
+   "row": 2
+  },
+  {
+   "id": "wizard_hat",
+   "row": 3
+  },
+  {
+   "id": "flower_crown",
+   "row": 4
+  },
+  {
+   "id": "cat_ears",
+   "row": 5
+  },
+  {
+   "id": "grad_cap",
+   "row": 6
+  }
+ ],
+ "accessory_unlocks": {
+  "flower_crown": {
+   "pomodoros": 5
+  },
+  "beanie": {
+   "pomodoros": 15
+  },
+  "headphones": {
+   "pomodoros": 30
+  },
+  "cat_ears": {
+   "streakDays": 3
+  },
+  "crown": {
+   "streakDays": 14
+  },
+  "wizard_hat": {
+   "pomodoros": 75
+  },
+  "grad_cap": {
+   "pomodoros": 150
+  }
+ },
+ "badges": {
+  "first_pomodoro": {
+   "pomodoros": 1
+  },
+  "bronze_10": {
+   "pomodoros": 10
+  },
+  "silver_50": {
+   "pomodoros": 50
+  },
+  "gold_100": {
+   "pomodoros": 100
+  },
+  "streak_7": {
+   "streakDays": 7
+  },
+  "streak_30": {
+   "streakDays": 30
+  },
+  "night_owl": "finish a pomodoro between 00:00 and 04:00",
+  "early_bird": "finish a pomodoro between 05:00 and 08:00"
+ },
+ "accessory_frame": {
+  "w": 18,
+  "h": 22,
+  "note": "Draw the accessory frame on top of the avatar frame with the same index."
+ }
+}
