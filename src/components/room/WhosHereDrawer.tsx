@@ -1,10 +1,11 @@
 import React from 'react';
-import { RoomPresenceMap } from '../../services/roomPresence';
+import { RoomPresenceMap, RoomSeatsMap } from '../../services/roomPresence';
 import { layout } from '../../engine/assets';
 import { getAccessoryRow } from '../../lib/unlocks';
 
 interface WhosHereDrawerProps {
   presence: RoomPresenceMap;
+  seats?: RoomSeatsMap;
   currentUid: string | null;
   isOpen: boolean;
   onToggle: () => void;
@@ -13,6 +14,7 @@ interface WhosHereDrawerProps {
 
 export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
   presence,
+  seats,
   currentUid,
   isOpen,
   onToggle,
@@ -29,7 +31,8 @@ export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
     return 0;
   };
 
-  const getStatusDisplay = (status: string, seatId: string | null) => {
+  const getStatusDisplay = (status: string, seatId: string | null, readerUid: string) => {
+    const isSeated = Boolean(seatId && (!seats || seats[seatId] === readerUid));
     if (status === 'away') {
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -54,7 +57,7 @@ export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
         </div>
       );
     }
-    if (seatId) {
+    if (isSeated) {
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <img
@@ -206,7 +209,7 @@ export const WhosHereDrawer: React.FC<WhosHereDrawerProps> = ({
                   >
                     {reader.username || 'reader'} {isSelf && '(you)'}
                   </div>
-                  <div>{getStatusDisplay(reader.status, reader.seatId)}</div>
+                  <div>{getStatusDisplay(reader.status, reader.seatId, reader.uid)}</div>
                   {reader.goal?.text && (
                     <div
                       style={{

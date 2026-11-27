@@ -98,6 +98,7 @@ export const RoomPage: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isClockNudging, setIsClockNudging] = useState(false);
+  const [isTakenOver, setIsTakenOver] = useState(false);
   const lastNudgedPhaseRef = useRef<string | null>(null);
 
   // Preload timer favicons and restore default on leaving room
@@ -299,11 +300,14 @@ export const RoomPage: React.FC = () => {
   useEffect(() => {
     if (!cleanCode || !user || !profile || roomNotFound) return;
 
-    const handleSeatConflict = () => {
-      addToast('Someone just sat there!', 'info');
-    };
-
-    const manager = initRoomPresence(cleanCode, user.uid, profile, handleSeatConflict);
+    const manager = initRoomPresence(cleanCode, user.uid, profile, {
+      onSeatConflict: () => {
+        addToast('Someone just sat there!', 'info');
+      },
+      onTabTakeover: () => {
+        setIsTakenOver(true);
+      },
+    });
     presenceManagerRef.current = manager;
 
     const unsubRoomData = subscribeToRoomData(
@@ -579,17 +583,28 @@ export const RoomPage: React.FC = () => {
       }
 
       const seat = getSeatAtCoords(coords);
-      if (!seat || !presenceManagerRef.current) return;
+      if (!seat || !presenceManagerRef.current || isTakenOver) return;
+      if (presenceManagerRef.current.isPaused()) return;
 
-      if (seats[seat.id]) return;
+      const occupantUid = seats[seat.id];
+      if (occupantUid && occupantUid !== user?.uid) return;
+      if (user && occupantUid === user.uid && presence[user.uid]?.seatId === seat.id) return;
 
       const success = await presenceManagerRef.current.claimSeat(seat.id);
       if (success) {
         squashMapRef.current.set(seat.id, performance.now());
       }
     },
-    [presence, seats]
+    [presence, seats, isTakenOver, user]
   );
+
+  const handleUseHere = useCallback(async () => {
+    if (presenceManagerRef.current) {
+      await presenceManagerRef.current.takeoverHere();
+      setIsTakenOver(false);
+      addToast('Room active in this tab', 'info');
+    }
+  }, [addToast]);
 
   // 7. HUD Actions
   const handleStandUp = useCallback(async () => {
@@ -666,6 +681,8 @@ export const RoomPage: React.FC = () => {
   // 8b. Keyboard Shortcuts (Room page only)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isTakenOver) return;
+
       // Ignore all shortcuts when typing in input, textarea, or contentEditable
       const activeEl = document.activeElement;
       if (activeEl) {
@@ -721,6 +738,7 @@ export const RoomPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     timer,
+    isTakenOver,
     handlePauseTimer,
     handleResumeTimer,
     handleStartTimer,
@@ -924,7 +942,8 @@ export const RoomPage: React.FC = () => {
     );
   }
 
-  const isCurrentSeated = Boolean(user && presence[user.uid]?.seatId);
+  const mySeatId = user ? presence[user.uid]?.seatId : null;
+  const isCurrentSeated = Boolean(user && mySeatId && seats[mySeatId] === user.uid);
 
   return (
     <div
@@ -991,6 +1010,7 @@ export const RoomPage: React.FC = () => {
       {/* Who's Here Drawer */}
       <WhosHereDrawer
         presence={presence}
+        seats={seats}
         currentUid={user?.uid || null}
         isOpen={isDrawerOpen}
         onToggle={() => setIsDrawerOpen((prev) => !prev)}
@@ -1035,6 +1055,58 @@ export const RoomPage: React.FC = () => {
       {/* Keyboard Shortcuts Modal */}
       {isShortcutsOpen && (
         <KeyboardShortcutsModal onClose={() => setIsShortcutsOpen(false)} />
+      )}
+
+      {/* Multi-Tab Takeover Modal */}
+      {isTakenOver && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(27, 20, 35, 0.90)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            className="pixel-panel"
+            style={{
+              width: '100%',
+              maxWidth: '380px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '14px',
+              padding: '24px 28px',
+              textAlign: 'center',
+              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.95)',
+            }}
+          >
+            <div className="px-20" style={{ color: '#1b1423', fontWeight: 'bold' }}>
+              You opened this room in another tab
+            </div>
+            <div className="px-10" style={{ color: '#7a4d31' }}>
+              Presence is paused in this window. Click below to switch back to this tab.
+            </div>
+            <button
+              type="button"
+              onClick={handleUseHere}
+              className="pixel-btn pixel-btn-primary"
+              style={{
+                width: '100%',
+                fontSize: '20px',
+                minHeight: '44px',
+                marginTop: '4px',
+              }}
+            >
+              Use here
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

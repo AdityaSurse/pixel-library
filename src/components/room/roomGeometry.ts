@@ -54,6 +54,7 @@ export function getNoteAtCoords(
     if (!uid) continue;
     const reader = presence[uid];
     if (!reader || !reader.goal) continue;
+    if (reader.seatId !== seat.id) continue;
 
     const note = getDeskNoteCoords(seat);
     // Expand hit area by 2px on each side for comfortable hover / tap

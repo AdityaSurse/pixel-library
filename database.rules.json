@@ -13,8 +13,9 @@
         },
         "seats": {
           ".read": "auth != null",
+          ".indexOn": ".value",
           "$seatId": {
-            ".write": "auth != null && ((!data.exists() && newData.val() == auth.uid) || (data.val() == auth.uid && !newData.exists()))",
+            ".write": "auth != null && ((!newData.exists() && data.val() == auth.uid) || (newData.val() == auth.uid && (!data.exists() || data.val() == auth.uid)))",
             ".validate": "newData.val() == auth.uid"
           }
         },

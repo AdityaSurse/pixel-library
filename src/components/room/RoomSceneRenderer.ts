@@ -18,7 +18,7 @@ import {
   drawPlus,
 } from '../../engine/sprites';
 import { drawAtlasNameTag, drawGoalSpeechBubble } from '../../engine/atlasText';
-import { RoomPresenceMap, RoomSeatsMap } from '../../services/roomPresence';
+import { RoomPresenceMap, RoomSeatsMap, ReaderPresence } from '../../services/roomPresence';
 import { getUserPhaseOffset, getDeskNoteCoords } from './roomGeometry';
 import { getAccessoryRow } from '../../lib/unlocks';
 
@@ -168,13 +168,30 @@ export function renderRoomScene(
     return { scaleX: 1, scaleY: 1 };
   };
 
-  // Layer 2: Far-Seat Avatars (frames 0-3, facing viewer)
+  // 1. ONE SOURCE OF TRUTH FOR RENDERING:
+  // Draw avatars ONLY from seats/{seatId} = uid joined with that uid's presence entry.
+  // A uid can appear at most once in the scene — if it appears in more than one seat,
+  // render only the seat that matches presence.seatId and ignore the rest.
+  const validSeatReaders = new Map<string, ReaderPresence>();
+  const renderedUids = new Set<string>();
+
   for (const seat of layout.seats) {
-    if (seat.side !== 'far') continue;
     const uid = seats[seat.id];
     if (!uid) continue;
     const reader = presence[uid];
     if (!reader) continue;
+    if (reader.seatId === seat.id && !renderedUids.has(uid)) {
+      validSeatReaders.set(seat.id, reader);
+      renderedUids.add(uid);
+    }
+  }
+
+  // Layer 2: Far-Seat Avatars (frames 0-3, facing viewer)
+  for (const seat of layout.seats) {
+    if (seat.side !== 'far') continue;
+    const reader = validSeatReaders.get(seat.id);
+    if (!reader) continue;
+    const uid = reader.uid;
 
     const { scaleX, scaleY } = getSquashScale(seat.id);
     let frame = 0;
@@ -211,10 +228,9 @@ export function renderRoomScene(
   // Layer 3: Near-Seat Avatars (frames 4-7, back view)
   for (const seat of layout.seats) {
     if (seat.side !== 'near') continue;
-    const uid = seats[seat.id];
-    if (!uid) continue;
-    const reader = presence[uid];
+    const reader = validSeatReaders.get(seat.id);
     if (!reader) continue;
+    const uid = reader.uid;
 
     const { scaleX, scaleY } = getSquashScale(seat.id);
     let frame = 4;
@@ -255,7 +271,7 @@ export function renderRoomScene(
 
   for (const seat of layout.seats) {
     if (seat.side !== 'near') continue;
-    if (seats[seat.id]) {
+    if (validSeatReaders.has(seat.id)) {
       drawChairNear(ctx, seat.chair.x, seat.chair.y, activeChairImg);
     }
   }
@@ -295,9 +311,7 @@ export function renderRoomScene(
 
   // Layer 5.5: Desk Notes for Seated Readers
   for (const seat of layout.seats) {
-    const uid = seats[seat.id];
-    if (!uid) continue;
-    const reader = presence[uid];
+    const reader = validSeatReaders.get(seat.id);
     if (!reader || !reader.goal) continue;
 
     const noteCoords = getDeskNoteCoords(seat);
@@ -313,10 +327,9 @@ export function renderRoomScene(
 
   // Layer 6: Status Bubbles & Name Tags
   for (const seat of layout.seats) {
-    const uid = seats[seat.id];
-    if (!uid) continue;
-    const reader = presence[uid];
+    const reader = validSeatReaders.get(seat.id);
     if (!reader) continue;
+    const uid = reader.uid;
 
     // Status bubble placement
     const bubbleX = seat.avatar.x + 8;
@@ -377,7 +390,7 @@ export function renderRoomScene(
   }
 
   // 2. Empty chair hover: bobbing plus icon 2px above seat
-  if (hoveredSeatId && !seats[hoveredSeatId]) {
+  if (hoveredSeatId && !validSeatReaders.has(hoveredSeatId)) {
     const emptySeat = layout.seats.find((s) => s.id === hoveredSeatId);
     if (emptySeat) {
       const bob = Math.floor(Math.sin(timeMs * 0.01) * 1.5);
@@ -401,7 +414,7 @@ export function renderRoomScene(
   // 4. Desk note speech-bubble tooltip on hover / tap
   if (activeNoteTooltip) {
     const seat = layout.seats.find((s) => s.id === activeNoteTooltip.seatId);
-    if (seat) {
+    if (seat && validSeatReaders.has(seat.id)) {
       const noteCoords = getDeskNoteCoords(seat);
       drawGoalSpeechBubble(
         ctx,
